@@ -128,6 +128,57 @@ describe("openProject", () => {
     );
   });
 
+  it("moves only the file when it is a sibling of its folder's entry", () => {
+    const { cwd, project } = open("standalone-owner-sibling-of-entry", {
+      root: "src",
+    });
+    const found = project.findings(path.join(cwd, "src/MyPage/util.ts"));
+    expect(found).toHaveLength(1);
+    expect(found[0]?.data).toEqual({
+      destination: "src/x/",
+      owner: "src/x.ts",
+      moving: "src/MyPage/util.ts",
+    });
+    expect(formatMessage(found[0]!)).toBe(
+      "File is imported only by the standalone file 'src/x.ts'; move 'src/MyPage/util.ts' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
+    );
+  });
+
+  it("moves only the file when its folder owner is an ancestor", () => {
+    const { cwd, project } = open("standalone-owner-ancestor-folder", {
+      root: "src",
+    });
+    const found = project
+      .findings(path.join(cwd, "src/Feat/lib/deep.ts"))
+      .filter((f) => f.kind === "privateOutsideOwner");
+    expect(found).toHaveLength(1);
+    expect(found[0]?.data).toEqual({
+      destination: "src/x/",
+      owner: "src/x.ts",
+      moving: "src/Feat/lib/deep.ts",
+    });
+    expect(formatMessage(found[0]!)).toBe(
+      "File is imported only by the standalone file 'src/x.ts'; move 'src/Feat/lib/deep.ts' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
+    );
+  });
+
+  it("moves only the owner when the folder already is the destination", () => {
+    const { cwd, project } = open("standalone-owner-same-name-folder", {
+      root: "src",
+    });
+    const found = project
+      .findings(path.join(cwd, "src/x/index.ts"))
+      .filter((f) => f.kind === "privateOutsideOwner");
+    expect(found).toHaveLength(1);
+    expect(found[0]?.data).toEqual({
+      destination: "src/x/",
+      owner: "src/x.ts",
+    });
+    expect(formatMessage(found[0]!)).toBe(
+      "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
+    );
+  });
+
   it.each([
     [
       "private-standalone-owner-grouped",

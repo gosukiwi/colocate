@@ -88,7 +88,11 @@ function isNamespaceBarrel(filePath: string, graph: Graph): boolean {
   return collectReExports(filePath, path.dirname(filePath), graph).length >= 2;
 }
 
-function isOwnerEntryFile(file: string, dir: string, graph: Graph): boolean {
+export function isOwnerEntryFile(
+  file: string,
+  dir: string,
+  graph: Graph,
+): boolean {
   if (path.dirname(file) !== dir) {
     return false;
   }

@@ -65,9 +65,13 @@ function ownershipFindingsFor(
           ? {}
           : {
               owner: display(standalone.owner),
-              moving: standalone.movingIsDir
-                ? displayDir(display, standalone.moving)
-                : display(standalone.moving),
+              ...(standalone.moving === undefined
+                ? {}
+                : {
+                    moving: standalone.movingIsDir
+                      ? displayDir(display, standalone.moving)
+                      : display(standalone.moving),
+                  }),
             }),
       },
     }),

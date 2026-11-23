@@ -18,9 +18,14 @@ const TEMPLATES: Record<FindingKind, string> = {
 const STANDALONE_OWNER_TEMPLATE =
   "File is imported only by the standalone file '{{owner}}'; move '{{moving}}' and '{{owner}}' into the folder '{{destination}}' so the owner becomes its entry.";
 
+const STANDALONE_OWNER_ONLY_TEMPLATE =
+  "File is imported only by the standalone file '{{owner}}' beside its folder; move '{{owner}}' into '{{destination}}' so it becomes the folder's entry.";
+
 function templateFor(finding: Finding): string {
   if (finding.kind === "privateOutsideOwner" && "owner" in finding.data) {
-    return STANDALONE_OWNER_TEMPLATE;
+    return "moving" in finding.data
+      ? STANDALONE_OWNER_TEMPLATE
+      : STANDALONE_OWNER_ONLY_TEMPLATE;
   }
   return TEMPLATES[finding.kind];
 }
