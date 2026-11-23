@@ -42,6 +42,9 @@ describe("validateOptions", () => {
     ["a string", "options"],
     ["a number", 3],
     ["a boolean", true],
+    ["a Date", new Date()],
+    ["a Map", new Map()],
+    ["a class instance", new (class Config {})()],
   ])("rejects %s as the options object", (_label, raw) => {
     expect(() => validateOptions(raw)).toThrow(/must be an object/);
   });

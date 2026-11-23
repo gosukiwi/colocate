@@ -45,7 +45,11 @@ function isRuleArray(value: unknown): value is RuleName[] {
 }
 
 function isPlainObject(raw: unknown): raw is Record<string, unknown> {
-  return typeof raw === "object" && raw !== null && !Array.isArray(raw);
+  if (typeof raw !== "object" || raw === null) {
+    return false;
+  }
+  const proto: unknown = Object.getPrototypeOf(raw);
+  return proto === Object.prototype || proto === null;
 }
 
 function assertKnownKeys(raw: Record<string, unknown>): void {
