@@ -8,7 +8,7 @@ colocate is a standalone CLI. There is no ESLint, no peer dependency, no rule ad
 src/bin.ts                    process entry: run(argv, io) -> exit code
 src/index.ts                  library surface: openProject, validateOptions, formatMessage
 src/options.ts                Options, defaults, validateOptions (unknown keys rejected)
-src/messages.ts               one template per FindingKind, formatMessage(Finding)
+src/messages.ts               one template per MessageId, formatMessage(Finding)
 src/cli/run.ts                argument parsing, config load, output, exit codes
 src/cli/baseline.ts           colocate.baseline.json: read, write, absorb, drop stale
 src/project/                  folder owned by project.ts: the model behind a run
@@ -42,7 +42,7 @@ The placement of `src/project/` is dictated by colocate itself: `project.ts` is 
 
 `bin.ts` calls `run` in `cli/run.ts`, which parses arguments (`node:util` `parseArgs`), loads `colocate.config.json` through `fs-safe.ts`, and validates it with `validateOptions`. It then calls `openProject(options, cwd)` from `project/project.ts`, asks the Project for `files()` and `findings(file)`, converts each `Finding` to a report (cwd-relative path, line/column from the Finding's `range`, text from `formatMessage`), applies the Baseline, and prints.
 
-`openProject` builds the graph once (`collectSourceFiles` then `buildGraphFromFiles`); there is no cache across runs and no revalidation. A missing root yields an empty Project. A `Finding` is `{ rule, kind, file, range?, data }`. `data` is the only place a Finding carries paths for messages and for the Baseline, and **those paths are already cwd-relative and posix** (`display` in `project.ts`). Do not hand absolute paths to `messages.ts` or the Baseline.
+`openProject` builds the graph once (`collectSourceFiles` then `buildGraphFromFiles`); there is no cache across runs and no revalidation. A missing root yields an empty Project. A `Finding` is `{ rule, kind, messageId, file, range?, data }`. `messageId` picks the template in `messages.ts`: it equals `kind` except for the two standalone-owner variants of `privateOutsideOwner`, and it never reaches JSON output or the Baseline. `data` is the only place a Finding carries paths for messages and for the Baseline, and **those paths are already cwd-relative and posix** (`display` in `project.ts`). Do not hand absolute paths to `messages.ts` or the Baseline.
 
 `subjectFor(file, root, ignore, graph)` in `findings/subject.ts` is the one preamble that turns a path into a `Subject` (realpath, scope test) or `undefined`. `Subject.covers` tests a resolved target; use it rather than rebuilding the disjunction.
 
