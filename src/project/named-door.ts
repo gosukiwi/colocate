@@ -10,13 +10,14 @@ import {
 } from "../lib/graph.js";
 import { parseSourceFile, stringLiteralText } from "../lib/parse.js";
 import { scopeBindsRequire } from "../lib/require-binding.js";
+import { stem } from "../lib/paths.js";
 import { resolveSpecifier } from "../lib/resolve.js";
 
 export function isNamedDoor(filePath: string): boolean {
   if (!isEntryFile(filePath)) {
     return false;
   }
-  return path.basename(filePath, path.extname(filePath)) !== "index";
+  return stem(filePath) !== "index";
 }
 
 function isValueReexport(node: ts.ExportDeclaration): boolean {

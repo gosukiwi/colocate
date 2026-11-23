@@ -3,6 +3,7 @@ import path from "node:path";
 import { derivedFromGraph } from "../../lib/derived.js";
 import { classifyDirEntry, safeReaddir, safeStat } from "../../lib/fs-safe.js";
 import type { Graph } from "../../lib/graph.js";
+import { stem } from "../../lib/paths.js";
 import {
   getSharedColocationIssue,
   movedWithStandaloneOwner,
@@ -140,7 +141,7 @@ function isSingletonWrapperDirectory(
   }
 
   const dirName = path.basename(dir);
-  const fileBasename = path.basename(filename, path.extname(filename));
+  const fileBasename = stem(filename);
   return fileBasename === dirName || fileBasename === "index";
 }
 

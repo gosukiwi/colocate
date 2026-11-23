@@ -10,7 +10,7 @@ import {
   type Graph,
 } from "../../lib/graph.js";
 import { parseSourceFile } from "../../lib/parse.js";
-import { isAtOrInsideDir, isInsideDir } from "../../lib/paths.js";
+import { isAtOrInsideDir, isInsideDir, stem } from "../../lib/paths.js";
 import { resolveSpecifier } from "../../lib/resolve.js";
 import { SKIP_DIRS } from "../../lib/scope.js";
 
@@ -81,7 +81,7 @@ export function collectReExports(
 }
 
 function isNamespaceBarrel(filePath: string, graph: Graph): boolean {
-  const basename = path.basename(filePath, path.extname(filePath));
+  const basename = stem(filePath);
   if (basename !== "index") {
     return false;
   }
@@ -92,7 +92,7 @@ function isOwnerEntryFile(file: string, dir: string, graph: Graph): boolean {
   if (path.dirname(file) !== dir) {
     return false;
   }
-  const base = path.basename(file, path.extname(file));
+  const base = stem(file);
   if (base === path.basename(dir)) {
     return true;
   }
@@ -422,7 +422,7 @@ export function isLayerPublicModule(
   }
 
   const folderName = path.basename(parent);
-  const fileBase = path.basename(filePath, path.extname(filePath));
+  const fileBase = stem(filePath);
   return fileBase === folderName || fileBase === "index";
 }
 
@@ -462,8 +462,7 @@ export function ownerHome(owner: Owner): string {
   if (owner.kind === "folder") {
     return owner.path;
   }
-  const stem = path.basename(owner.path, path.extname(owner.path));
-  return path.join(path.dirname(owner.path), stem);
+  return path.join(path.dirname(owner.path), stem(owner.path));
 }
 
 export interface Moved {
