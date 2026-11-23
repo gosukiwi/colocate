@@ -50,7 +50,7 @@ describe("validateOptions", () => {
   });
 
   it("rejects an unknown key and names it", () => {
-    expect(() => validateOptions({ shells: [] })).toThrow(/shells/);
+    expect(() => validateOptions({ bogus: [] })).toThrow(/bogus/);
   });
 
   it("rejects a non-string root and names it", () => {

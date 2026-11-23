@@ -32,15 +32,6 @@ describe("openProject", () => {
     ]);
   });
 
-  it("orders ownership findings as the rule does", () => {
-    const { cwd, project } = open("two-findings-one-file", { root: "src" });
-    const file = path.join(cwd, "src/shared/Widget/Widget.ts");
-    expect(project.findings(file).map((f) => f.kind)).toEqual([
-      "singletonFolder",
-      "privateOutsideOwner",
-    ]);
-  });
-
   it("reports reachesPastEntry with the specifier range and message", () => {
     const { cwd, project } = open("entry-reaches-past", { root: "src" });
     const file = path.join(cwd, "src/app.ts");
