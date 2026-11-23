@@ -16,49 +16,46 @@ export interface ParsedFile {
 export function parseForStore(
   file: string,
   content: string,
-  retainSource: (file: string) => boolean,
+  retainSource: boolean,
 ): ParsedFile {
   const sourceFile = parseSourceFile(file, content);
   const imports = importsFromSourceFile(sourceFile);
-  return retainSource(file) ? { imports, sourceFile } : { imports };
+  return retainSource ? { imports, sourceFile } : { imports };
 }
 
 export const parsedFilesOf = derivedFromGraph(
   () => new Map<string, ParsedFile>(),
 );
 
-export function parsedSourceFile(
+function load(
   graph: Graph,
   file: string,
-): ts.SourceFile | undefined {
+  needSource: boolean,
+): ParsedFile | undefined {
   const store = parsedFilesOf(graph);
-  const known = store.get(file)?.sourceFile;
-  if (known !== undefined) {
+  const known = store.get(file);
+  if (known !== undefined && (!needSource || known.sourceFile !== undefined)) {
     return known;
   }
   const content = safeReadFile(file);
   if (content === undefined) {
     return undefined;
   }
-  const parsed = parseForStore(file, content, () => true);
+  const parsed = parseForStore(file, content, needSource);
   store.set(file, parsed);
-  return parsed.sourceFile;
+  return parsed;
+}
+
+export function parsedSourceFile(
+  graph: Graph,
+  file: string,
+): ts.SourceFile | undefined {
+  return load(graph, file, true)?.sourceFile;
 }
 
 export function parsedImports(
   graph: Graph,
   file: string,
 ): readonly ParsedImport[] | undefined {
-  const store = parsedFilesOf(graph);
-  const known = store.get(file);
-  if (known !== undefined) {
-    return known.imports;
-  }
-  const content = safeReadFile(file);
-  if (content === undefined) {
-    return undefined;
-  }
-  const parsed = parseForStore(file, content, () => false);
-  store.set(file, parsed);
-  return parsed.imports;
+  return load(graph, file, false)?.imports;
 }

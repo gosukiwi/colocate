@@ -122,7 +122,7 @@ export function buildGraphFromFiles(
       continue;
     }
     const fromDir = path.dirname(file);
-    const parsed = parseForStore(file, content, retainSource);
+    const parsed = parseForStore(file, content, retainSource(file));
     store.set(file, parsed);
 
     for (const { specifier } of parsed.imports) {
@@ -153,15 +153,11 @@ export function buildGraphFromFiles(
   return graph;
 }
 
-export function buildGraph(
-  rootDir: string,
-  ignoreGlobs: string[],
-  retainSource?: (file: string) => boolean,
-): Graph {
+export function buildGraph(rootDir: string, ignoreGlobs: string[]): Graph {
   const resolvedRoot = safeRealpath(rootDir);
   if (resolvedRoot === undefined) {
     return { importers: new Map(), files: [] };
   }
   const { files } = collectSourceFiles(resolvedRoot, ignoreGlobs);
-  return buildGraphFromFiles(files, resolvedRoot, retainSource);
+  return buildGraphFromFiles(files, resolvedRoot);
 }

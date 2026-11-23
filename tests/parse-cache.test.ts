@@ -32,27 +32,9 @@ const cwd = path.join(
   "fixtures/parse-once",
 );
 
-function isEntryFile(file: string): boolean {
-  const stem = path.basename(file, path.extname(file));
-  return stem === "index" || stem === path.basename(path.dirname(file));
-}
-
 describe("parse each file once", () => {
   beforeEach(() => {
     parsed.counts.clear();
-  });
-
-  it("parses every non-entry file exactly once across the graph and entry findings", () => {
-    const project = openProject(validateOptions({}), cwd);
-    const files = project.files();
-    for (const file of files) {
-      project.findings(file);
-    }
-    const nonEntry = files.filter((file) => !isEntryFile(file));
-    expect(nonEntry.length).toBeGreaterThan(0);
-    for (const file of nonEntry) {
-      expect([file, parsed.counts.get(file)]).toEqual([file, 1]);
-    }
   });
 
   it("parses every file exactly once, entry files included", () => {
