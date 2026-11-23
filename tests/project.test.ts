@@ -48,6 +48,7 @@ describe("openProject", () => {
     expect(found).toHaveLength(1);
     const [finding] = found;
     expect(finding?.kind).toBe("reachesPastEntry");
+    expect(finding?.messageId).toBe("reachesPastEntry");
     expect(finding?.rule).toBe("entry");
     const content = fs.readFileSync(file, "utf8");
     const [start, end] = finding?.range ?? [0, 0];
@@ -74,6 +75,7 @@ describe("openProject", () => {
     const file = path.join(cwd, "src/Foo/Foo.ts");
     const found = project.findings(file);
     expect(found.map((f) => f.kind)).toEqual(["namedDoorReexport"]);
+    expect(found[0]?.messageId).toBe("namedDoorReexport");
     expect(formatMessage(found[0]!)).toBe(
       "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
@@ -92,6 +94,7 @@ describe("openProject", () => {
     const found = project.findings(path.join(cwd, "src/pages/helper.ts"));
     expect(found).toHaveLength(1);
     expect(found[0]?.kind).toBe("privateOutsideOwner");
+    expect(found[0]?.messageId).toBe("privateOutsideOwner");
     expect(found[0]?.data).toEqual({ destination: "src/pages/MyPage/" });
     expect(formatMessage(found[0]!)).toBe(
       "File is imported by a single owner but sits outside that owner's folder; move it into 'src/pages/MyPage/'.",
@@ -216,6 +219,7 @@ describe("openProject", () => {
     const { cwd, project } = open("shared-too-high", { root: "src" });
     const found = project.findings(path.join(cwd, "src/helpers/fmt.ts"));
     expect(found.map((f) => f.kind)).toEqual(["sharedTooHigh"]);
+    expect(found[0]?.messageId).toBe("sharedTooHigh");
     expect(found[0]?.data).toEqual({ destination: "src/pages/" });
     expect(formatMessage(found[0]!)).toBe(
       "File is imported by multiple owners but sits above their common ancestor directory; move it into 'src/pages/'.",
@@ -226,6 +230,7 @@ describe("openProject", () => {
     const { cwd, project } = open("mixed-importers", { root: "src" });
     const found = project.findings(path.join(cwd, "src/pages/A/fmt-buried.ts"));
     expect(found.map((f) => f.kind)).toEqual(["sharedInsideOwner"]);
+    expect(found[0]?.messageId).toBe("sharedInsideOwner");
     expect(found[0]?.data).toEqual({ destination: "src/" });
     expect(formatMessage(found[0]!)).toBe(
       "File is imported by multiple owners but sits inside a single owner's folder; move it into 'src/'.",
