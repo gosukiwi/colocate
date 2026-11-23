@@ -1,6 +1,13 @@
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { safeReadFile, safeRealpath } from "../lib/fs-safe.js";
+import {
+  absorb,
+  dropStale,
+  entryOf,
+  readBaseline,
+  writeBaseline,
+} from "./baseline.js";
 import { formatMessage } from "../messages.js";
 import { validateOptions, type Options } from "../options.js";
 import { openProject, type Finding } from "../project.js";
@@ -17,6 +24,9 @@ interface Args {
   format: Format;
   config: string | undefined;
   root: string | undefined;
+  updateBaseline: boolean;
+  baselineAddAll: boolean;
+  help: boolean;
 }
 
 interface Report {
@@ -30,6 +40,18 @@ interface Report {
 }
 
 const DEFAULT_CONFIG = "colocate.config.json";
+
+const USAGE = `Usage: colocate [root] [options]
+
+  colocate [root]       lint the project; root overrides the configured root
+  --format text|json    output format (default text)
+  --config <path>       config file (default colocate.config.json)
+  --update-baseline     drop fixed entries from colocate.baseline.json; creates it if missing
+  --baseline-add-all    record every current finding in the baseline \u2014 for humans adopting colocate; agents must not use this
+  --help                show this help
+
+Exit codes: 0 clean, 2 findings or error
+`;
 
 function parseFormat(value: string | undefined): Format {
   if (value === undefined || value === "text") {
@@ -49,15 +71,26 @@ function parseArguments(argv: string[]): Args {
     options: {
       format: { type: "string" },
       config: { type: "string" },
+      "update-baseline": { type: "boolean" },
+      "baseline-add-all": { type: "boolean" },
+      help: { type: "boolean" },
     },
   });
   if (positionals.length > 1) {
     throw new Error("Expected at most one root argument");
   }
+  if (values["update-baseline"] && values["baseline-add-all"]) {
+    throw new Error(
+      "--update-baseline and --baseline-add-all cannot be used together",
+    );
+  }
   return {
     format: parseFormat(values.format),
     config: values.config,
     root: positionals[0],
+    updateBaseline: values["update-baseline"] === true,
+    baselineAddAll: values["baseline-add-all"] === true,
+    help: values.help === true,
   };
 }
 
@@ -129,13 +162,27 @@ function collect(options: Options, cwd: string): Report[] {
     .map((finding) => toReport(finding, base));
 }
 
-function emit(format: Format, reports: Report[], io: RunIo): void {
+function emit(
+  format: Format,
+  reports: Report[],
+  stale: number,
+  io: RunIo,
+): void {
   if (format === "json") {
-    io.stdout(JSON.stringify({ findings: reports }) + "\n");
+    const body =
+      stale > 0
+        ? { findings: reports, staleBaseline: stale }
+        : { findings: reports };
+    io.stdout(JSON.stringify(body) + "\n");
     return;
   }
   for (const report of reports) {
     io.stderr(textLine(report));
+  }
+  if (stale > 0) {
+    io.stderr(
+      `colocate: ${stale} baselined finding(s) no longer occur; run colocate --update-baseline\n`,
+    );
   }
 }
 
@@ -148,14 +195,38 @@ function emitError(format: Format, error: unknown, io: RunIo): void {
   }
 }
 
+function applyBaseline(args: Args, reports: Report[], cwd: string) {
+  if (args.baselineAddAll) {
+    writeBaseline(cwd, reports.map(entryOf));
+    return undefined;
+  }
+  let baseline = readBaseline(cwd);
+  if (args.updateBaseline) {
+    baseline =
+      baseline === undefined
+        ? reports.map(entryOf)
+        : dropStale(baseline, absorb(reports, baseline).stale);
+    writeBaseline(cwd, baseline);
+  }
+  return absorb(reports, baseline ?? []);
+}
+
 export function run(argv: string[], io: RunIo): number {
   let format: Format = "text";
   try {
     const args = parseArguments(argv);
     format = args.format;
+    if (args.help) {
+      io.stdout(USAGE);
+      return 0;
+    }
     const reports = collect(loadOptions(args, io.cwd), io.cwd);
-    emit(format, reports, io);
-    return reports.length === 0 ? 0 : 2;
+    const result = applyBaseline(args, reports, io.cwd);
+    if (result === undefined) {
+      return 0;
+    }
+    emit(format, result.unabsorbed, result.stale.length, io);
+    return result.unabsorbed.length === 0 ? 0 : 2;
   } catch (error) {
     emitError(format, error, io);
     return 2;
