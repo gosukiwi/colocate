@@ -1,0 +1,58 @@
+{
+  "name": "@gosukiwi/eslint-plugin-colocate",
+  "version": "0.2.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "author": "Federico Ramirez",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check:placement": "tsx scripts/check-placement.ts",
+    "crap": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=lcov && crap4ts src --coverage ./coverage/lcov.info --max-crap 15",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "peerDependencies": {
+    "eslint": ">=9"
+  },
+  "dependencies": {
+    "minimatch": "^11.0.9",
+    "typescript": "^5 || ^6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@gosukiwi/crap4ts": "^0.2.2",
+    "@gosukiwi/eslint-plugin-colocate": "^0.1.0",
+    "@types/node": "^22.15.29",
+    "@typescript-eslint/parser": "^8",
+    "@vitest/coverage-v8": "^5.1.1",
+    "eslint": "^10",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.15",
+    "typescript": "^5 || ^6",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "@gosukiwi/eslint-plugin-colocate": {
+      "minimatch": "$minimatch"
+    }
+  }
+}

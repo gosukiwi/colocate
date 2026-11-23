@@ -1,0 +1,3 @@
+# A standalone CLI over files on disk, not a lint plugin
+
+Colocate's rules need the whole import graph, which makes them project-level analysis rather than per-file linting, and its main use is as a guardrail for AI agents (pre-push hook, agent harness hook, CI), not editor feedback. So colocate is a standalone CLI that reads only files on disk and depends on no linter. It replaces `@gosukiwi/eslint-plugin-colocate`, which is frozen and deprecated once colocate has the same checks. We did not write an ESLint or oxlint plugin: either would run a whole-graph analysis one file at a time inside a per-file linter, tie colocate to that linter's API and release cycle, and only add editor-buffer feedback, which a guardrail does not need.
