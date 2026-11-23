@@ -27,6 +27,24 @@ export const parsedFilesOf = derivedFromGraph(
   () => new Map<string, ParsedFile>(),
 );
 
+export function parsedSourceFile(
+  graph: Graph,
+  file: string,
+): ts.SourceFile | undefined {
+  const store = parsedFilesOf(graph);
+  const known = store.get(file)?.sourceFile;
+  if (known !== undefined) {
+    return known;
+  }
+  const content = safeReadFile(file);
+  if (content === undefined) {
+    return undefined;
+  }
+  const parsed = parseForStore(file, content, () => true);
+  store.set(file, parsed);
+  return parsed.sourceFile;
+}
+
 export function parsedImports(
   graph: Graph,
   file: string,

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { safeReadFile, safeRealpath } from "../lib/fs-safe.js";
+import { safeRealpath } from "../lib/fs-safe.js";
 import {
   ownershipFindings,
   resolveRootDir,
@@ -8,6 +8,7 @@ import {
   subjectFor,
   type Subject,
 } from "./findings/index.js";
+import { isEntryFile } from "./gates.js";
 import { buildGraphFromFiles, type Graph } from "../lib/graph.js";
 import { crossedGate } from "./crossing.js";
 import { isNamedDoor, namedDoorReexports } from "./named-door.js";
@@ -128,13 +129,12 @@ function crossingFindings(
 function reexportFindings(
   subject: Subject,
   graph: Graph,
-  content: string,
   display: (filePath: string) => string,
 ): Finding[] {
   if (!isNamedDoor(subject.file)) {
     return [];
   }
-  return namedDoorReexports(subject.file, graph, content).map(
+  return namedDoorReexports(subject.file, graph).map(
     ({ target, pos, end }) => ({
       rule: "entry",
       kind: "namedDoorReexport",
@@ -154,13 +154,9 @@ function entryFindingsFor(
   graph: Graph,
   display: (filePath: string) => string,
 ): Finding[] {
-  const content = safeReadFile(subject.file);
-  if (content === undefined) {
-    return [];
-  }
   return [
     ...crossingFindings(subject, graph, display),
-    ...reexportFindings(subject, graph, content, display),
+    ...reexportFindings(subject, graph, display),
   ].sort((a, b) => (a.range?.[0] ?? 0) - (b.range?.[0] ?? 0));
 }
 
@@ -177,6 +173,7 @@ export function openProject(options: Options, cwd: string): Project {
   const graph = buildGraphFromFiles(
     collectSourceFiles(realRootDir, options.ignore).files,
     realRootDir,
+    isEntryFile,
   );
   const subjectOf = (file: string): Subject | undefined =>
     subjectFor(file, root, options.ignore, graph);

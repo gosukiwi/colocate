@@ -54,4 +54,16 @@ describe("parse each file once", () => {
       expect([file, parsed.counts.get(file)]).toEqual([file, 1]);
     }
   });
+
+  it("parses every file exactly once, entry files included", () => {
+    const project = openProject(validateOptions({}), cwd);
+    const files = project.files();
+    for (const file of files) {
+      project.findings(file);
+    }
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) {
+      expect([file, parsed.counts.get(file)]).toEqual([file, 1]);
+    }
+  });
 });

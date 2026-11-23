@@ -26,24 +26,23 @@ const root = path.join(path.sep, "p", "src");
 const at = (...parts: string[]): string => path.join(root, ...parts);
 
 describe("namedDoorReexports", () => {
-  it("parses buffer content when provided instead of reading disk", () => {
+  it("scans the door file on disk", () => {
     const base = fs.realpathSync(tempDir("colocate-named-door-buffer-"));
     const srcDir = path.join(base, "src");
     const fooDir = path.join(srcDir, "Foo");
     fs.mkdirSync(fooDir, { recursive: true });
     const fooPath = path.join(fooDir, "Foo.ts");
     const sibPath = path.join(fooDir, "sib.ts");
-    fs.writeFileSync(fooPath, "export const Foo = 1;\n");
+    const buffer = 'export { x } from "./sib";\n';
+    fs.writeFileSync(fooPath, buffer);
     fs.writeFileSync(sibPath, "export const x = 1;\n");
     fs.writeFileSync(path.join(srcDir, "app.ts"), 'import "./Foo";\n');
 
     const graph = buildGraph(srcDir, []);
-    const buffer = 'export { x } from "./sib";\n';
 
-    expect(namedDoorReexports(fooPath, graph, buffer)).toEqual([
+    expect(namedDoorReexports(fooPath, graph)).toEqual([
       { target: sibPath, pos: 0, end: buffer.indexOf("\n") },
     ]);
-    expect(namedDoorReexports(fooPath, graph)).toEqual([]);
   });
 });
 

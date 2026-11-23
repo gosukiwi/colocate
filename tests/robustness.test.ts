@@ -206,4 +206,22 @@ describe("robustness", () => {
       fs.rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  it("answers entry findings from the build-time parse after a file changes on disk", () => {
+    const dir = tempProject({
+      "src/main.ts": 'import "./Other/Other";\n',
+      "src/Other/Other.ts": 'export { x } from "./sib";\n',
+      "src/Other/sib.ts": "export const x = 1;\n",
+    });
+    try {
+      const project = openProject(validateOptions({ root: "src" }), dir);
+      const door = fs.realpathSync(path.join(dir, "src/Other/Other.ts"));
+      const before = project.findings(door);
+      expect(before.map((f) => f.kind)).toEqual(["namedDoorReexport"]);
+      fs.writeFileSync(door, "export const y = 1;\n");
+      expect(project.findings(door)).toEqual(before);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

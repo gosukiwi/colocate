@@ -2,14 +2,14 @@ import path from "node:path";
 import { minimatch } from "minimatch";
 import ts from "typescript";
 import { derivedFromGraph } from "../../lib/derived.js";
-import { safeReadFile, safeReaddir, safeRealpath } from "../../lib/fs-safe.js";
+import { safeReaddir, safeRealpath } from "../../lib/fs-safe.js";
 import {
   canonicalGraphPath,
   getGraphResolutionSettings,
   graphFilesInDir,
   type Graph,
 } from "../../lib/graph.js";
-import { parseSourceFile } from "../../lib/parse.js";
+import { parsedSourceFile } from "../../lib/parsed-files.js";
 import { isAtOrInsideDir, isInsideDir, stem } from "../../lib/paths.js";
 import { resolveSpecifier } from "../../lib/resolve.js";
 import { SKIP_DIRS } from "../../lib/scope.js";
@@ -28,13 +28,12 @@ export interface SharedIssue {
 const reExportsByGraph = derivedFromGraph(() => new Map<string, string[]>());
 
 function scanReExports(indexFile: string, dir: string, graph: Graph): string[] {
-  const content = safeReadFile(indexFile);
+  const sourceFile = parsedSourceFile(graph, indexFile);
   const realDir = safeRealpath(dir);
   const realIndex = safeRealpath(indexFile);
-  if (content === undefined || realDir === undefined) {
+  if (sourceFile === undefined || realDir === undefined) {
     return [];
   }
-  const sourceFile = parseSourceFile(indexFile, content);
   const settings = getGraphResolutionSettings(graph);
   const local = new Set<string>();
 
