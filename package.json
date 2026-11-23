@@ -7,6 +7,9 @@
   "license": "MIT",
   "author": "Federico Ramirez",
   "type": "module",
+  "bin": {
+    "colocate": "./dist/bin.js"
+  },
   "engines": {
     "node": ">=20"
   },
