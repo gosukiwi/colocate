@@ -13,7 +13,7 @@ export {
   getSharedColocationIssue,
   getShells,
   isLayerPublicModule,
-  privateOutsideOwnerDir,
+  privateOutsideOwner,
   resolveLayerDirectories,
   shouldSkipColocation,
   type Owner,

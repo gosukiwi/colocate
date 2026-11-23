@@ -97,6 +97,20 @@ describe("openProject", () => {
     );
   });
 
+  it("asks to group a helper with its standalone owner into the owner's folder", () => {
+    const { cwd, project } = open("private-standalone-owner", { root: "src" });
+    const found = project.findings(path.join(cwd, "src/pages/helper.ts"));
+    expect(found).toHaveLength(1);
+    expect(found[0]?.kind).toBe("privateOutsideOwner");
+    expect(found[0]?.data).toEqual({
+      destination: "src/pages/MyPage/",
+      owner: "src/pages/MyPage.ts",
+    });
+    expect(formatMessage(found[0]!)).toBe(
+      "File is imported only by the standalone file 'src/pages/MyPage.ts'; move both files into a new folder 'src/pages/MyPage/' so the owner becomes its entry.",
+    );
+  });
+
   it("points sharedTooHigh at the owners' common ancestor", () => {
     const { cwd, project } = open("shared-too-high", { root: "src" });
     const found = project.findings(path.join(cwd, "src/helpers/fmt.ts"));

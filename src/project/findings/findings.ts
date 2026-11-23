@@ -5,8 +5,9 @@ import { classifyDirEntry, safeReaddir, safeStat } from "../../lib/fs-safe.js";
 import type { Graph } from "../../lib/graph.js";
 import {
   getSharedColocationIssue,
-  privateOutsideOwnerDir,
+  privateOutsideOwner,
   resolveLayerDirectories,
+  type Owner,
   type OwnershipContext,
 } from "./owners.js";
 import {
@@ -143,6 +144,19 @@ function isSingletonWrapperDirectory(
 export interface OwnershipResult {
   kind: OwnershipFinding;
   destination: string;
+  standaloneOwner?: string;
+}
+
+function privateOutsideOwnerResult(owner: Owner): OwnershipResult {
+  if (owner.kind === "folder") {
+    return { kind: "privateOutsideOwner", destination: owner.path };
+  }
+  const name = path.basename(owner.path, path.extname(owner.path));
+  return {
+    kind: "privateOutsideOwner",
+    destination: path.join(path.dirname(owner.path), name),
+    standaloneOwner: owner.path,
+  };
 }
 
 export function ownershipFindings(
@@ -170,9 +184,9 @@ export function ownershipFindings(
     });
   }
 
-  const privateDir = privateOutsideOwnerDir(file, ctx);
-  if (privateDir !== undefined) {
-    findings.push({ kind: "privateOutsideOwner", destination: privateDir });
+  const owner = privateOutsideOwner(file, ctx);
+  if (owner !== undefined) {
+    findings.push(privateOutsideOwnerResult(owner));
   }
   const sharedIssue = getSharedColocationIssue(file, ctx);
   if (sharedIssue !== undefined) {

@@ -464,10 +464,10 @@ function isOutsideOwner(filePath: string, owner: Owner): boolean {
     : filePath !== owner.path;
 }
 
-export function privateOutsideOwnerDir(
+export function privateOutsideOwner(
   filePath: string,
   ctx: OwnershipContext,
-): string | undefined {
+): Owner | undefined {
   if (shouldSkipColocation(filePath, ctx)) {
     return undefined;
   }
@@ -486,7 +486,7 @@ export function privateOutsideOwnerDir(
   if (owner === undefined || !isOutsideOwner(filePath, owner)) {
     return undefined;
   }
-  return ownerDir(owner);
+  return owner;
 }
 
 function longestCommonAncestor(dirs: string[]): string {

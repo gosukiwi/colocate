@@ -15,8 +15,18 @@ const TEMPLATES: Record<FindingKind, string> = {
     "'{{target}}' is inside module '{{module}}'; import it through '{{entry}}', or move it out of '{{module}}' if it is not part of it.",
 };
 
+const STANDALONE_OWNER_TEMPLATE =
+  "File is imported only by the standalone file '{{owner}}'; move both files into a new folder '{{destination}}' so the owner becomes its entry.";
+
+function templateFor(finding: Finding): string {
+  if (finding.kind === "privateOutsideOwner" && "owner" in finding.data) {
+    return STANDALONE_OWNER_TEMPLATE;
+  }
+  return TEMPLATES[finding.kind];
+}
+
 export function formatMessage(finding: Finding): string {
-  return TEMPLATES[finding.kind].replace(
+  return templateFor(finding).replace(
     /\{\{(\w+)\}\}/g,
     (_, key: string) => finding.data[key] ?? "",
   );
