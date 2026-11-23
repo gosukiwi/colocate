@@ -1,7 +1,10 @@
 import path from "node:path";
-import type { Subject } from "../findings/index.js";
-import { canonicalGraphPath, getGraphResolutionSettings } from "../graph.js";
-import { resolveSpecifier } from "../resolve.js";
+import type { Subject } from "./findings/index.js";
+import {
+  canonicalGraphPath,
+  getGraphResolutionSettings,
+} from "../lib/graph.js";
+import { resolveSpecifier } from "../lib/resolve.js";
 import { findCrossedGate, type CrossedGate } from "./gates.js";
 
 export interface Crossing extends CrossedGate {

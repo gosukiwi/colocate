@@ -1,4 +1,4 @@
-import type { Finding, FindingKind } from "./project.js";
+import type { Finding, FindingKind } from "./project/project.js";
 
 const TEMPLATES: Record<FindingKind, string> = {
   privateOutsideOwner:

@@ -8,7 +8,7 @@ import {
   collectLayerDirectories,
   collectReExports,
   resolveLayerDirectories,
-} from "../src/lib/findings/index.js";
+} from "../src/project/findings/index.js";
 
 const created: string[] = [];
 

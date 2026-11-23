@@ -1,9 +1,6 @@
 {
-  "name": "@gosukiwi/eslint-plugin-colocate",
-  "version": "0.2.1",
-  "publishConfig": {
-    "access": "public"
-  },
+  "name": "colocate",
+  "version": "0.1.0",
   "license": "MIT",
   "author": "Federico Ramirez",
   "type": "module",
@@ -30,7 +27,8 @@
     "crap": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=lcov && crap4ts src --coverage ./coverage/lcov.info --max-crap 15",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "tsc --noEmit"
+    "lint": "oxlint --deny-warnings src tests scripts",
+    "colocate": "tsx src/bin.ts"
   },
   "dependencies": {
     "minimatch": "^11.0.9",
@@ -40,6 +38,7 @@
     "@gosukiwi/crap4ts": "^0.2.2",
     "@types/node": "^22.15.29",
     "@vitest/coverage-v8": "^5.1.1",
+    "oxlint": "^1.95.0",
     "prettier": "^3.9.6",
     "tsx": "^4.23.15",
     "typescript": "^5 || ^6",

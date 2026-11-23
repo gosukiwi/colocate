@@ -1,18 +1,18 @@
 import path from "node:path";
 import { minimatch } from "minimatch";
 import ts from "typescript";
-import { derivedFromGraph } from "../derived.js";
-import { safeReadFile, safeReaddir, safeRealpath } from "../fs-safe.js";
+import { derivedFromGraph } from "../../lib/derived.js";
+import { safeReadFile, safeReaddir, safeRealpath } from "../../lib/fs-safe.js";
 import {
   canonicalGraphPath,
   getGraphResolutionSettings,
   graphFilesInDir,
   type Graph,
-} from "../graph.js";
-import { parseSourceFile } from "../parse.js";
-import { isInsideDir } from "../paths.js";
-import { resolveSpecifier } from "../resolve.js";
-import { SKIP_DIRS } from "../scope.js";
+} from "../../lib/graph.js";
+import { parseSourceFile } from "../../lib/parse.js";
+import { isInsideDir } from "../../lib/paths.js";
+import { resolveSpecifier } from "../../lib/resolve.js";
+import { SKIP_DIRS } from "../../lib/scope.js";
 
 export interface OwnershipContext {
   graph: Graph;

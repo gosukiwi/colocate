@@ -1,7 +1,7 @@
 import path from "node:path";
-import { safeRealpath } from "../fs-safe.js";
-import type { Graph } from "../graph.js";
-import { isInGraphScope, isSourceFile } from "../scope.js";
+import { safeRealpath } from "../../lib/fs-safe.js";
+import type { Graph } from "../../lib/graph.js";
+import { isInGraphScope, isSourceFile } from "../../lib/scope.js";
 
 export interface Subject {
   readonly rootDir: string;

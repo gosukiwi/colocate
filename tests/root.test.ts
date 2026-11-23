@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveRootDir } from "../src/lib/findings/index.js";
+import { resolveRootDir } from "../src/project/findings/index.js";
 
 const created: string[] = [];
 

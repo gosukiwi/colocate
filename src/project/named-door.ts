@@ -1,16 +1,16 @@
 import path from "node:path";
 import ts from "typescript";
 import { isEntryFile } from "./gates.js";
-import { safeReadFile } from "../fs-safe.js";
+import { safeReadFile } from "../lib/fs-safe.js";
 import {
   canonicalGraphPath,
   getGraphResolutionSettings,
   graphHasFile,
   type Graph,
-} from "../graph.js";
-import { parseSourceFile, stringLiteralText } from "../parse.js";
-import { scopeBindsRequire } from "../require-binding.js";
-import { resolveSpecifier } from "../resolve.js";
+} from "../lib/graph.js";
+import { parseSourceFile, stringLiteralText } from "../lib/parse.js";
+import { scopeBindsRequire } from "../lib/require-binding.js";
+import { resolveSpecifier } from "../lib/resolve.js";
 
 export function isNamedDoor(filePath: string): boolean {
   if (!isEntryFile(filePath)) {

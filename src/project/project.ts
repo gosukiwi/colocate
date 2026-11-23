@@ -1,20 +1,17 @@
 import path from "node:path";
-import { safeReadFile, safeRealpath } from "./lib/fs-safe.js";
+import { safeReadFile, safeRealpath } from "../lib/fs-safe.js";
 import {
   ownershipFindings,
   resolveRootDir,
   subjectFor,
   type Subject,
-} from "./lib/findings/index.js";
-import { buildGraphFromFiles, type Graph } from "./lib/graph.js";
-import {
-  crossedGate,
-  isNamedDoor,
-  namedDoorReexports,
-} from "./lib/named-door/index.js";
-import { extractImports } from "./lib/parse.js";
-import { collectSourceFiles } from "./lib/walk.js";
-import type { Options, RuleName } from "./options.js";
+} from "./findings/index.js";
+import { buildGraphFromFiles, type Graph } from "../lib/graph.js";
+import { crossedGate } from "./crossing.js";
+import { isNamedDoor, namedDoorReexports } from "./named-door.js";
+import { extractImports } from "../lib/parse.js";
+import { collectSourceFiles } from "../lib/walk.js";
+import type { Options, RuleName } from "../options.js";
 
 export type FindingKind =
   | "privateOutsideOwner"

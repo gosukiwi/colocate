@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   buildGraph,
   canonicalGraphPath,
@@ -46,19 +46,9 @@ const normProbeDir = fs.mkdtempSync(
 const filesystemFoldsNormalization = foldsNormalization(normProbeDir);
 fs.rmSync(normProbeDir, { recursive: true, force: true });
 
-const fixtureRoot = path.join(
-  fileURLToPath(new URL(".", import.meta.url)),
-  "fixtures/graph",
-);
-
 const jsExtFixtureRoot = path.join(
   fileURLToPath(new URL(".", import.meta.url)),
   "fixtures/graph-js-ext",
-);
-
-const aliasPrivateFixtureRoot = path.join(
-  fileURLToPath(new URL(".", import.meta.url)),
-  "fixtures/alias-private",
 );
 
 function fixture(name: string): string {

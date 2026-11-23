@@ -1,43 +1,47 @@
-# eslint-plugin-colocate
+# colocate
 
 Put files next to whoever uses them.
 
-An ESLint plugin that enforces dependency-based file organization. A file used by one module belongs inside that module's folder. A file used by several belongs at their closest common ancestor — not buried in one of them, and not floating above them. Empty wrapper folders get flagged too.
+A command-line check that enforces dependency-based file organization. A file used by one module belongs inside that module's folder. A file used by several belongs at their closest common ancestor — not buried in one of them, and not floating above them. Empty wrapper folders get flagged too.
 
-The folders become a map of who uses what. Moving a file has a right answer. Reviewers and AI agents follow the same rule, so the layout stays consistent as the codebase grows.
+The folders become a map of who uses what. Moving a file has a right answer. Reviewers and AI agents follow the same rule, so the layout stays consistent as the codebase grows. colocate is built as a guardrail: run it from a pre-push hook, an agent harness hook, or CI.
+
+colocate reads files on disk only. There is no editor or linter integration; see [ADR 0001](docs/adr/0001-standalone-cli-not-lint-plugin.md) for why.
 
 ## Install
 
 ```bash
-npm install -D @gosukiwi/eslint-plugin-colocate
+npm i -D colocate
 ```
 
-Requires Node 20+ and ESLint 9+.
+Requires Node 20+.
 
 ## Usage
 
-```js
-import colocate from "@gosukiwi/eslint-plugin-colocate";
-
-export default [
-  {
-    plugins: {
-      colocate,
-    },
-    rules: {
-      "colocate/ownership": [
-        "error",
-        {
-          root: "src",
-          layers: ["src/ui"],
-          ignore: ["**/*.generated.ts"],
-        },
-      ],
-      "colocate/entry": ["error", { root: "src" }],
-    },
-  },
-];
+```bash
+npx colocate              # check the project in the current directory
+npx colocate src          # override the configured root
+npx colocate --format json
+npx colocate --config path/to/colocate.config.json
 ```
+
+A **Rule** is a check (`ownership` or `entry`); a **Finding** is one violation a Rule reports. colocate prints every Finding and exits non-zero if there are any.
+
+## Configuration
+
+colocate reads `colocate.config.json` from the working directory (or the file given with `--config`). Every key is optional and unknown keys are rejected.
+
+```json
+{
+  "root": "src",
+  "layers": ["src/ui"],
+  "ignore": ["**/*.generated.ts"],
+  "rules": ["ownership", "entry"]
+}
+```
+
+- `root`, `ignore`, `layers`: see [Options](#options).
+- `rules`: which Rules to run, any of `"ownership"` and `"entry"`. Default is both.
 
 ## Examples
 
@@ -105,7 +109,7 @@ src/pages/Home/Home.ts
 
 ## The model
 
-The plugin builds an import graph over `root` and checks that each file's location matches its consumers.
+colocate builds an import graph over `root` and checks that each file's location matches its consumers.
 
 **Owners.** A directory is an owner when it has an entry file: one named after the directory (`pages/MyPage/MyPage.ts`), or an `index` that outside code imports through. A barrel that only groups loose helpers does not make its directory an owner. A file with no such folder around it owns only itself.
 
@@ -121,7 +125,7 @@ For a longer bootstrap chain (`main → router → App → pages/...`), or a she
 
 ## What it reports
 
-_This covers `colocate/ownership`'s findings. `colocate/entry` reports `reachesPastEntry` and `namedDoorReexport` — see [The entry rule](#the-entry-rule)._
+_This covers the `ownership` Rule's Findings. The `entry` Rule reports `reachesPastEntry` and `namedDoorReexport` — see [The entry rule](#the-entry-rule)._
 
 | message               | meaning                                                                                                     | usual fix                                                                                 |
 | --------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -136,13 +140,13 @@ An `index` that re-exports two or more siblings is a namespace barrel and is lef
 
 ## Options
 
-_These apply to `colocate/ownership`. See [The entry rule](#the-entry-rule) for `colocate/entry`'s options._ Unknown option names are rejected.
+_`root` and `ignore` apply to both Rules; `layers` applies to `ownership` only._ Unknown option names are rejected.
 
 ### `root`
 
 Directory to walk, and the ceiling for ownership. Default `"."`. Set `"src"` for a typical app.
 
-A relative `root` is resolved from the working directory, then searched upward so `eslint` still works from a subdirectory. The search stops at the nearest `package.json` or `.git`. Files outside `root` are never reported.
+A relative `root` is resolved from the working directory, then searched upward so colocate still works from a subdirectory. The search stops at the nearest `package.json` or `.git`. Files outside `root` are never reported. A `root` argument on the command line overrides the configured one.
 
 ### `layers`
 
@@ -154,9 +158,11 @@ Only the layer's own files and each child folder's entry (`Button/Button.ts` or 
 
 This is also how a deeper app shell is described:
 
-```js
-layers: ["src", "src/pages"]; // top-level modules and pages are public peers
+```json
+{ "layers": ["src", "src/pages"] }
 ```
+
+That makes top-level modules and pages public peers.
 
 ### `ignore`
 
@@ -164,7 +170,7 @@ Globs relative to `root`. Ignored files are not reported and do not count as con
 
 ## The entry rule
 
-`colocate/ownership` decides where a file belongs. `colocate/entry` decides how you get in.
+The `ownership` Rule decides where a file belongs. The `entry` Rule decides how you get in.
 
 A directory containing an **entry file** — one named after the directory, or an `index` — is a module with a front door. Imports from outside must land on a door. Reaching past every door into the internals is an error.
 
@@ -185,9 +191,84 @@ import { loadThread } from "../pages/Inbox/Inbox.ts";
 
 **Unlike `ownership`, entry points get no exemption.** A file nothing imports still may not reach past a door; a shell burrowing into a feature's internals is exactly the finding worth having.
 
-**Two kinds of door.** A file named after its folder (`Foo/Foo.ts`) is the shortcut door: the public module is that file, and it may export only what it declares. `index.ts` is the barrel door: the public surface may come from more than one file. `colocate/entry` reports `namedDoorReexport` when a named door identity-re-exports another source file in the graph — the usual fix is to add or use `index.ts`, or stop re-exporting. Re-exporting siblings from `index` is allowed; type-only re-exports are not this finding. Reaching past a door is still `reachesPastEntry` (unchanged).
+**Two kinds of door.** A file named after its folder (`Foo/Foo.ts`) is the shortcut door: the public module is that file, and it may export only what it declares. `index.ts` is the barrel door: the public surface may come from more than one file. The `entry` Rule reports `namedDoorReexport` when a named door identity-re-exports another source file in the graph — the usual fix is to add or use `index.ts`, or stop re-exporting. Re-exporting siblings from `index` is allowed; type-only re-exports are not this finding. Reaching past a door is still `reachesPastEntry` (unchanged).
 
-Options are `root` and `ignore`, with the same meaning as `ownership`. There is no `layers` option — layers are about placement, and say nothing about access. Do not ignore an entry file: that removes the door, and reaching into that folder stops being an error. There is no autofix: rewriting a specifier would produce code that doesn't compile whenever the door doesn't already re-export the symbol, so widening the door is left to the user.
+`entry` uses `root` and `ignore` with the same meaning as `ownership`. There is no `layers` option — layers are about placement, and say nothing about access. Do not ignore an entry file: that removes the door, and reaching into that folder stops being an error. colocate never edits files: rewriting a specifier would produce code that doesn't compile whenever the door doesn't already re-export the symbol, so widening the door is left to you.
+
+## Output format
+
+Text output goes to stderr, one Finding per line:
+
+```
+path:line:col  rule/kind  message
+src/pages/helper.ts  ownership/privateOutsideOwner  File is imported by a single owner but sits outside that owner's folder; move it into 'src/pages/MyPage/'.
+src/app.ts:3:21  entry/reachesPastEntry  'src/pages/Inbox/state.ts' is inside module 'src/pages/Inbox'; import it through 'src/pages/Inbox/Inbox.ts', or move it out of 'src/pages/Inbox' if it is not part of it.
+```
+
+Paths are relative to the working directory. Findings about a file as a whole (the `ownership` Rule) have no `line:col`; Findings about an import (the `entry` Rule) do.
+
+With `--format json`, one JSON object goes to stdout:
+
+```json
+{
+  "findings": [
+    {
+      "rule": "entry",
+      "kind": "reachesPastEntry",
+      "file": "src/app.ts",
+      "line": 3,
+      "column": 21,
+      "message": "...",
+      "data": { "target": "src/pages/Inbox/state.ts" }
+    }
+  ],
+  "staleBaseline": 2
+}
+```
+
+`line` and `column` are omitted for file-level Findings. `staleBaseline` appears only when the Baseline holds entries that no longer occur. If colocate itself fails (bad config, unreadable baseline), the JSON is `{ "error": "<message>" }`.
+
+## Exit codes
+
+| code | meaning                       |
+| ---- | ----------------------------- |
+| 0    | clean                         |
+| 2    | Findings, or any error at all |
+
+Findings and errors share exit code 2 on purpose. Claude Code hooks only show a command's stderr to the agent when it exits with 2; any other non-zero code is treated as a non-blocking error and the agent never sees the message.
+
+## Baseline
+
+A Baseline (`colocate.baseline.json`) records Findings you have accepted so a legacy codebase can adopt colocate without fixing everything first. Baselined Findings are not reported; new ones are.
+
+- `colocate --baseline-add-all` records every current Finding. It is for humans adopting colocate; agents must not use it.
+- `colocate --update-baseline` only shrinks an existing Baseline: it drops entries whose Findings no longer occur and never adds new ones. If no Baseline file exists yet, it is created from the current Findings.
+- Entries that no longer occur are reported as stale (`staleBaseline` in JSON) until you run `--update-baseline`.
+
+## Hooks and CI
+
+**Git pre-push hook** (`.git/hooks/pre-push`, made executable):
+
+```sh
+#!/bin/sh
+npx colocate
+```
+
+**Claude Code `Stop` hook** (`.claude/settings.json`), so the agent sees Findings and fixes them before it finishes:
+
+```json
+{
+  "hooks": {
+    "Stop": [{ "hooks": [{ "type": "command", "command": "npx colocate" }] }]
+  }
+}
+```
+
+**GitHub Actions step:**
+
+```yaml
+- run: npx colocate
+```
 
 ## Notes
 

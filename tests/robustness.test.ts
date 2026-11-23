@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { lintFixture, lintFixtureRule } from "./helpers/lint-fixture.js";
-import { openProject } from "../src/project.js";
+import { openProject } from "../src/project/project.js";
 import { validateOptions } from "../src/options.js";
 
 function sortMessages(

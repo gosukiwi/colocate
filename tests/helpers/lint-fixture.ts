@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { safeReadFile } from "../../src/lib/fs-safe.js";
 import { formatMessage } from "../../src/messages.js";
 import { validateOptions } from "../../src/options.js";
-import { openProject } from "../../src/project.js";
+import { openProject } from "../../src/project/project.js";
 
 const fixturesDir = path.join(
   fileURLToPath(new URL(".", import.meta.url)),

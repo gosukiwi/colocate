@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { formatMessage } from "../src/messages.js";
 import { validateOptions } from "../src/options.js";
-import { openProject } from "../src/project.js";
+import { openProject } from "../src/project/project.js";
 
 const fixtures = path.join(
   fileURLToPath(new URL(".", import.meta.url)),

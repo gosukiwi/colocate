@@ -3,10 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildGraph } from "../src/lib/graph.js";
-import {
-  isNamedDoor,
-  namedDoorReexports,
-} from "../src/lib/named-door/index.js";
+import { isNamedDoor, namedDoorReexports } from "../src/project/named-door.js";
 
 const created: string[] = [];
 

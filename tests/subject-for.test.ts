@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { subjectFor } from "../src/lib/findings/index.js";
+import { subjectFor } from "../src/project/findings/index.js";
 import { buildGraphFromFiles } from "../src/lib/graph.js";
 import { collectSourceFiles } from "../src/lib/walk.js";
 

@@ -5,7 +5,7 @@ import {
   findCrossedGate,
   getGates,
   isEntryFile,
-} from "../src/lib/named-door/index.js";
+} from "../src/project/gates.js";
 
 const root = path.join(path.sep, "p", "src");
 const at = (...parts: string[]): string => path.join(root, ...parts);

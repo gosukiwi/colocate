@@ -10,7 +10,7 @@ import {
 } from "./baseline.js";
 import { formatMessage } from "../messages.js";
 import { validateOptions, type Options } from "../options.js";
-import { openProject, type Finding } from "../project.js";
+import { openProject, type Finding } from "../project/project.js";
 
 export interface RunIo {
   cwd: string;
