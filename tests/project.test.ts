@@ -102,6 +102,7 @@ describe("openProject", () => {
     {
       fixture: "private-standalone-owner",
       flagged: "src/pages/helper.ts",
+      kinds: ["privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwner",
       data: {
         destination: "src/pages/MyPage/",
@@ -114,6 +115,7 @@ describe("openProject", () => {
     {
       fixture: "standalone-owner-folder-entry",
       flagged: "src/MyPage/MyPage.ts",
+      kinds: ["privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwner",
       data: { destination: "src/x/", owner: "src/x.ts", moving: "src/MyPage/" },
       message:
@@ -122,6 +124,7 @@ describe("openProject", () => {
     {
       fixture: "standalone-owner-sibling-of-entry",
       flagged: "src/MyPage/util.ts",
+      kinds: ["privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwner",
       data: {
         destination: "src/x/",
@@ -134,6 +137,7 @@ describe("openProject", () => {
     {
       fixture: "standalone-owner-ancestor-folder",
       flagged: "src/Feat/lib/deep.ts",
+      kinds: ["privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwner",
       data: {
         destination: "src/x/",
@@ -146,6 +150,7 @@ describe("openProject", () => {
     {
       fixture: "standalone-owner-same-name-folder",
       flagged: "src/x/index.ts",
+      kinds: ["singletonFolder", "privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwnerOnly",
       data: { destination: "src/x/", owner: "src/x.ts" },
       message:
@@ -154,6 +159,7 @@ describe("openProject", () => {
     {
       fixture: "standalone-owner-helper-in-owner-folder",
       flagged: "src/x/helper.ts",
+      kinds: ["privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwnerOnly",
       data: { destination: "src/x/", owner: "src/x.ts" },
       message:
@@ -162,6 +168,7 @@ describe("openProject", () => {
     {
       fixture: "standalone-owner-entry-in-owner-folder",
       flagged: "src/x/MyPage/MyPage.ts",
+      kinds: ["singletonFolder", "privateOutsideOwner"],
       messageId: "privateOutsideStandaloneOwnerOnly",
       data: { destination: "src/x/", owner: "src/x.ts" },
       message:
@@ -169,11 +176,11 @@ describe("openProject", () => {
     },
   ])(
     "explains the standalone-owner move for $fixture",
-    ({ fixture, flagged, messageId, data, message }) => {
+    ({ fixture, flagged, kinds, messageId, data, message }) => {
       const { cwd, project } = open(fixture, { root: "src" });
-      const found = project
-        .findings(path.join(cwd, flagged))
-        .filter((f) => f.kind === "privateOutsideOwner");
+      const all = project.findings(path.join(cwd, flagged));
+      expect(all.map((f) => f.kind)).toEqual(kinds);
+      const found = all.filter((f) => f.kind === "privateOutsideOwner");
       expect(found).toHaveLength(1);
       expect(found[0]?.messageId).toBe(messageId);
       expect(found[0]?.data).toEqual(data);
