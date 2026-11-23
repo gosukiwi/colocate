@@ -55,15 +55,20 @@ function ownershipFindingsFor(
   display: (filePath: string) => string,
 ): Finding[] {
   return ownershipFindings(subject, cwd, options.layers).map(
-    ({ kind, destination, standaloneOwner }) => ({
+    ({ kind, destination, standalone }) => ({
       rule: "ownership",
       kind,
       file: subject.file,
       data: {
         destination: displayDir(display, destination),
-        ...(standaloneOwner === undefined
+        ...(standalone === undefined
           ? {}
-          : { owner: display(standaloneOwner) }),
+          : {
+              owner: display(standalone.owner),
+              moving: standalone.movingIsDir
+                ? displayDir(display, standalone.moving)
+                : display(standalone.moving),
+            }),
       },
     }),
   );

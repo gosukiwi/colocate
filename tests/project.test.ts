@@ -105,10 +105,47 @@ describe("openProject", () => {
     expect(found[0]?.data).toEqual({
       destination: "src/pages/MyPage/",
       owner: "src/pages/MyPage.ts",
+      moving: "src/pages/helper.ts",
     });
     expect(formatMessage(found[0]!)).toBe(
-      "File is imported only by the standalone file 'src/pages/MyPage.ts'; move both files into a new folder 'src/pages/MyPage/' so the owner becomes its entry.",
+      "File is imported only by the standalone file 'src/pages/MyPage.ts'; move 'src/pages/helper.ts' and 'src/pages/MyPage.ts' into the folder 'src/pages/MyPage/' so the owner becomes its entry.",
     );
+  });
+
+  it("asks to move the whole folder when the flagged file is its folder's entry", () => {
+    const { cwd, project } = open("standalone-owner-folder-entry", {
+      root: "src",
+    });
+    const found = project.findings(path.join(cwd, "src/MyPage/MyPage.ts"));
+    expect(found).toHaveLength(1);
+    expect(found[0]?.data).toEqual({
+      destination: "src/x/",
+      owner: "src/x.ts",
+      moving: "src/MyPage/",
+    });
+    expect(formatMessage(found[0]!)).toBe(
+      "File is imported only by the standalone file 'src/x.ts'; move 'src/MyPage/' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
+    );
+  });
+
+  it.each([
+    [
+      "private-standalone-owner-grouped",
+      ["main", "App", "MyPage/MyPage", "MyPage/helper"].map(
+        (f) => `src/pages/${f}.ts`,
+      ),
+    ],
+    [
+      "standalone-owner-folder-entry-grouped",
+      ["main", "App", "x/x", "x/MyPage/MyPage", "x/MyPage/helper"].map(
+        (f) => `src/${f}.ts`,
+      ),
+    ],
+  ])("reports nothing once %s follows the advice", (fixture, files) => {
+    const { cwd, project } = open(fixture, { root: "src" });
+    for (const file of files) {
+      expect(project.findings(path.join(cwd, file))).toEqual([]);
+    }
   });
 
   it("points sharedTooHigh at the owners' common ancestor", () => {
