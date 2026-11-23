@@ -1,6 +1,5 @@
 import path from "node:path";
 import ts from "typescript";
-import { isEntryFile } from "./gates.js";
 import {
   canonicalGraphPath,
   getGraphResolutionSettings,
@@ -10,7 +9,7 @@ import {
 import { stringLiteralText } from "../lib/parse.js";
 import { parsedSourceFile } from "../lib/parsed-files.js";
 import { scopeBindsRequire } from "../lib/require-binding.js";
-import { stem } from "../lib/paths.js";
+import { isEntryFile, stem } from "../lib/paths.js";
 import { resolveSpecifier } from "../lib/resolve.js";
 
 export function isNamedDoor(filePath: string): boolean {

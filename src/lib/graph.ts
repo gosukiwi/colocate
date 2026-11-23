@@ -12,6 +12,7 @@ import {
   resolveSpecifier,
   type ResolutionSettings,
 } from "./resolve.js";
+import { isEntryFile } from "./paths.js";
 import { collectSourceFiles } from "./walk.js";
 
 export interface Graph {
@@ -102,7 +103,6 @@ export const getGraphResolutionSettings = derivedFromGraph(() =>
 export function buildGraphFromFiles(
   files: readonly string[],
   resolvedRoot: string,
-  retainSource: (file: string) => boolean = () => false,
 ): Graph {
   const fileSet = new Set(files);
   const filesByFoldedPath = new Map(
@@ -122,7 +122,7 @@ export function buildGraphFromFiles(
       continue;
     }
     const fromDir = path.dirname(file);
-    const parsed = parseForStore(file, content, retainSource(file));
+    const parsed = parseForStore(file, content, isEntryFile(file));
     store.set(file, parsed);
 
     for (const { specifier } of parsed.imports) {

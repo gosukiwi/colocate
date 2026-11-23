@@ -8,7 +8,6 @@ import {
   subjectFor,
   type Subject,
 } from "./findings/index.js";
-import { isEntryFile } from "./gates.js";
 import { buildGraphFromFiles, type Graph } from "../lib/graph.js";
 import { crossedGate } from "./crossing.js";
 import { isNamedDoor, namedDoorReexports } from "./named-door.js";
@@ -173,7 +172,6 @@ export function openProject(options: Options, cwd: string): Project {
   const graph = buildGraphFromFiles(
     collectSourceFiles(realRootDir, options.ignore).files,
     realRootDir,
-    isEntryFile,
   );
   const subjectOf = (file: string): Subject | undefined =>
     subjectFor(file, root, options.ignore, graph);

@@ -12,3 +12,8 @@ export function isAtOrInsideDir(filePath: string, dir: string): boolean {
 export function stem(filePath: string): string {
   return path.basename(filePath, path.extname(filePath));
 }
+
+export function isEntryFile(filePath: string): boolean {
+  const base = stem(filePath);
+  return base === "index" || base === path.basename(path.dirname(filePath));
+}
