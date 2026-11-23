@@ -14,7 +14,7 @@ export type RuleName = "ownership" | "entry";
 
 export interface FixtureMessage {
   file: string;
-  messageId: string;
+  kind: string;
   line?: number;
   message: string;
 }
@@ -59,7 +59,7 @@ export async function lintFixtureRule(
     for (const finding of project.findings(file)) {
       const message: FixtureMessage = {
         file: relative,
-        messageId: finding.kind,
+        kind: finding.kind,
         message: formatMessage(finding),
       };
       if (finding.range !== undefined) {
@@ -83,14 +83,14 @@ export async function lintFixture(
   name: string,
   ruleOptions?: Record<string, unknown>,
   targets: string[] = ["src"],
-): Promise<{ file: string; messageId: string }[]> {
+): Promise<{ file: string; kind: string }[]> {
   const messages = await lintFixtureRule(
     name,
     "ownership",
     ruleOptions,
     targets,
   );
-  return messages.map(({ file, messageId }) => ({ file, messageId }));
+  return messages.map(({ file, kind }) => ({ file, kind }));
 }
 
 export async function lintEntryFixture(

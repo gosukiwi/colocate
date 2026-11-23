@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { lintFixture, lintFixtureRule } from "./helpers/lint-fixture.js";
 
 function sortMessages(
-  messages: { file: string; messageId: string }[],
-): { file: string; messageId: string }[] {
+  messages: { file: string; kind: string }[],
+): { file: string; kind: string }[] {
   return [...messages].sort((a, b) => {
     const fileOrder = a.file.localeCompare(b.file);
-    return fileOrder !== 0 ? fileOrder : a.messageId.localeCompare(b.messageId);
+    return fileOrder !== 0 ? fileOrder : a.kind.localeCompare(b.kind);
   });
 }
 
@@ -15,7 +15,7 @@ describe("ownership rule", () => {
   it("reports singletonFolder when a directory has one source file and no CSS", async () => {
     const messages = await lintFixture("singleton-flag");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "src/Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -37,28 +37,28 @@ describe("ownership rule", () => {
   it("reports singletonFolder when the only stylesheet sits in a nested directory", async () => {
     const messages = await lintFixture("singleton-nested-css");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Widget/Widget.ts", messageId: "singletonFolder" },
+      { file: "src/Widget/Widget.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("follows require() calls when building the graph", async () => {
     const messages = await lintFixture("require-cjs");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.js", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.js", kind: "privateOutsideOwner" },
     ]);
   });
 
   it("follows import-equals-require declarations when building the graph", async () => {
     const messages = await lintFixture("require-import-equals");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
   it("does not count .d.mts declaration files as sources", async () => {
     const messages = await lintFixture("dts-declaration");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "src/Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -86,32 +86,32 @@ describe("ownership rule", () => {
   it("reports privateOutsideOwner when a private file sits outside its owner folder", async () => {
     const messages = await lintFixture("private-sibling");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("reports privateOutsideOwner when the only importer is a type-position import()", async () => {
     const messages = await lintFixture("private-type-import");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("reports privateOutsideOwner when the only importer uses a no-substitution template specifier", async () => {
     const messages = await lintFixture("private-template-specifier");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("reports privateOutsideOwner when the only importer is nested in lazy(() => import())", async () => {
     const messages = await lintFixture("private-lazy-import");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -123,14 +123,14 @@ describe("ownership rule", () => {
   it("reports privateOutsideOwner when the single owner is a standalone file", async () => {
     const messages = await lintFixture("private-standalone-owner");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
   it("does not report privateOutsideOwner on a page imported only by a shell", async () => {
     const messages = await lintFixture("page-not-pulled-into-app");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -147,7 +147,7 @@ describe("ownership rule", () => {
   it("does not treat a file imported by a root and a page as shell", async () => {
     const messages = await lintFixture("mixed-importers", { root: "src" });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/A/fmt-buried.ts", messageId: "sharedInsideOwner" },
+      { file: "src/pages/A/fmt-buried.ts", kind: "sharedInsideOwner" },
     ]);
   });
 
@@ -168,7 +168,7 @@ describe("ownership rule", () => {
       root: "src",
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/shared/thing.ts", messageId: "privateOutsideOwner" },
+      { file: "src/shared/thing.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -178,7 +178,7 @@ describe("ownership rule", () => {
       ignore: ["pages/Other/**"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -190,21 +190,21 @@ describe("ownership rule", () => {
   it("reports singletonFolder for a directory holding only an index file", async () => {
     const messages = await lintFixture("singleton-index", { root: "src" });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Foo/index.ts", messageId: "singletonFolder" },
+      { file: "src/Foo/index.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("does not count a test file as a directory's second source file", async () => {
     const messages = await lintFixture("singleton-with-test", { root: "src" });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "src/Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("does not count files in a build directory as a second source file", async () => {
     const messages = await lintFixture("singleton-with-dist", { root: "src" });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "src/Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -216,7 +216,7 @@ describe("ownership rule", () => {
   it("reports a page behind a multi-hop bootstrap chain without the shells option", async () => {
     const messages = await lintFixture("shell-chain");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/Home/Home.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/Home/Home.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -235,7 +235,7 @@ describe("ownership rule", () => {
     expect(sortMessages(messages)).toEqual([
       {
         file: "src/features/Cart/internals/boot.ts",
-        messageId: "sharedInsideOwner",
+        kind: "sharedInsideOwner",
       },
     ]);
   });
@@ -243,21 +243,21 @@ describe("ownership rule", () => {
   it("stays silent for a shell-shared helper at the merged owners' common ancestor", async () => {
     const messages = await lintFixture("shell-shared-helper");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/lib/helper-buried.ts", messageId: "sharedInsideOwner" },
+      { file: "src/lib/helper-buried.ts", kind: "sharedInsideOwner" },
     ]);
   });
 
   it("counts two shell importers from one folder owner as one shared voice", async () => {
     const messages = await lintFixture("shell-shells-one-voice");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/lib/lib.ts", messageId: "singletonFolder" },
+      { file: "src/lib/lib.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("treats a single shell co-user as shared, never private", async () => {
     const messages = await lintFixture("shell-single-couser");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/lib/lib.ts", messageId: "singletonFolder" },
+      { file: "src/lib/lib.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -274,40 +274,40 @@ describe("ownership rule", () => {
   it("reports sharedTooHigh when a shared file sits above the owners' common ancestor", async () => {
     const messages = await lintFixture("shared-too-high");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/helpers/fmt.ts", messageId: "sharedTooHigh" },
-      { file: "src/pages/A/A.ts", messageId: "singletonFolder" },
-      { file: "src/pages/B/B.ts", messageId: "singletonFolder" },
+      { file: "src/helpers/fmt.ts", kind: "sharedTooHigh" },
+      { file: "src/pages/A/A.ts", kind: "singletonFolder" },
+      { file: "src/pages/B/B.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("does not report shared placement when the file sits at the owners' common ancestor", async () => {
     const messages = await lintFixture("shared-at-lca-ok");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/A/A.ts", messageId: "singletonFolder" },
-      { file: "src/pages/B/B.ts", messageId: "singletonFolder" },
+      { file: "src/pages/A/A.ts", kind: "singletonFolder" },
+      { file: "src/pages/B/B.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("reports sharedInsideOwner when a shared file sits inside one owner's folder", async () => {
     const messages = await lintFixture("shared-inside-owner");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/A/fmt.ts", messageId: "sharedInsideOwner" },
-      { file: "src/pages/B/B.ts", messageId: "singletonFolder" },
+      { file: "src/pages/A/fmt.ts", kind: "sharedInsideOwner" },
+      { file: "src/pages/B/B.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("reports sharedInsideOwner when a shared file sits inside the innermost nested owner", async () => {
     const messages = await lintFixture("shared-inside-nested-owner");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/Outer/Inner/fmt.ts", messageId: "sharedInsideOwner" },
+      { file: "src/pages/Outer/Inner/fmt.ts", kind: "sharedInsideOwner" },
     ]);
   });
 
   it("does not report shared placement when the file sits in a common subdirectory", async () => {
     const messages = await lintFixture("shared-common-subdir-ok");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/A/A.ts", messageId: "singletonFolder" },
-      { file: "src/pages/B/B.ts", messageId: "singletonFolder" },
+      { file: "src/pages/A/A.ts", kind: "singletonFolder" },
+      { file: "src/pages/B/B.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -340,7 +340,7 @@ describe("ownership rule", () => {
       root: "src",
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -354,7 +354,7 @@ describe("ownership rule", () => {
     expect(sortMessages(messages)).toEqual([
       {
         file: "src/pages/A/Widget/Widget.ts",
-        messageId: "sharedInsideOwner",
+        kind: "sharedInsideOwner",
       },
     ]);
   });
@@ -362,7 +362,7 @@ describe("ownership rule", () => {
   it("reports a folder entry buried in a non-consumer owner and shared by two others", async () => {
     const messages = await lintFixture("shared-entry-inside-other-owner");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/C/Sub/Sub.ts", messageId: "sharedInsideOwner" },
+      { file: "src/pages/C/Sub/Sub.ts", kind: "sharedInsideOwner" },
     ]);
   });
 
@@ -374,7 +374,7 @@ describe("ownership rule", () => {
   it("reports sharedInsideOwner when the shared file sits inside a non-consumer owner", async () => {
     const messages = await lintFixture("shared-inside-other-owner");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/C/parts/fmt.ts", messageId: "sharedInsideOwner" },
+      { file: "src/pages/C/parts/fmt.ts", kind: "sharedInsideOwner" },
     ]);
   });
 
@@ -388,7 +388,7 @@ describe("ownership rule", () => {
       layers: ["src/ui"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -397,7 +397,7 @@ describe("ownership rule", () => {
       layers: ["src/ui"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -406,8 +406,8 @@ describe("ownership rule", () => {
       layers: ["src/ui"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/A/A.ts", messageId: "singletonFolder" },
-      { file: "src/pages/B/B.ts", messageId: "singletonFolder" },
+      { file: "src/pages/A/A.ts", kind: "singletonFolder" },
+      { file: "src/pages/B/B.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -416,8 +416,8 @@ describe("ownership rule", () => {
       layers: ["src/ui"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
-      { file: "src/ui/Button/icon.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
+      { file: "src/ui/Button/icon.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -426,24 +426,24 @@ describe("ownership rule", () => {
       layers: ["src/ui"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
-      { file: "src/pages/widget.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
+      { file: "src/pages/widget.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
   it("reports privateOutsideOwner when the private import uses a tsconfig path alias", async () => {
     const messages = await lintFixture("alias-private");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("resolves path aliases declared without baseUrl", async () => {
     const messages = await lintFixture("alias-private-no-baseurl");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -452,7 +452,7 @@ describe("ownership rule", () => {
     async () => {
       const messages = await lintFixture("wrong-case-import");
       expect(sortMessages(messages)).toEqual([
-        { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+        { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
       ]);
     },
   );
@@ -460,7 +460,7 @@ describe("ownership rule", () => {
   it("does not count consumers behind a symlink out of the root", async () => {
     const messages = await lintFixture("symlinked-module", { root: "src" });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -476,15 +476,15 @@ describe("ownership rule", () => {
       ignore: ["**/*.generated.ts"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "src/Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("resolves path aliases inherited through tsconfig extends", async () => {
     const messages = await lintFixture("alias-extends");
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -493,7 +493,7 @@ describe("ownership rule", () => {
       ignore: ["**/helper.ts"],
     });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+      { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -513,7 +513,7 @@ describe("ownership rule", () => {
   it("reports inside a directory whose name begins with two dots", async () => {
     const messages = await lintFixture("dotdot-dir", { root: "src" });
     expect(sortMessages(messages)).toEqual([
-      { file: "src/..data/Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "src/..data/Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -534,7 +534,7 @@ describe("ownership rule", () => {
       "src/pages/helper.ts",
     ]);
     expect(sortMessages(messages)).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -544,11 +544,9 @@ describe("ownership rule", () => {
       "ownership",
       { root: "src" },
     );
-    expect(
-      messages.map(({ file, messageId }) => ({ file, messageId })),
-    ).toEqual([
-      { file: "src/shared/Widget/Widget.ts", messageId: "singletonFolder" },
-      { file: "src/shared/Widget/Widget.ts", messageId: "privateOutsideOwner" },
+    expect(messages.map(({ file, kind }) => ({ file, kind }))).toEqual([
+      { file: "src/shared/Widget/Widget.ts", kind: "singletonFolder" },
+      { file: "src/shared/Widget/Widget.ts", kind: "privateOutsideOwner" },
     ]);
   });
 });
