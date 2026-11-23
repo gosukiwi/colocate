@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { isAtOrInsideDir, isInsideDir } from "../src/lib/paths.js";
+import { isAtOrInsideDir, isInsideDir, stem } from "../src/lib/paths.js";
 
 const sep = path.sep;
 const at = (...parts: string[]): string => path.join(sep, ...parts);
@@ -46,5 +46,23 @@ describe("isAtOrInsideDir", () => {
   it("treats a path under a separator-terminated root as within it", () => {
     expect(isAtOrInsideDir(at("sub", "a.ts"), sep)).toBe(true);
     expect(isAtOrInsideDir(sep, sep)).toBe(true);
+  });
+});
+
+describe("stem", () => {
+  it("drops the extension", () => {
+    expect(stem(at("p", "src", "Foo.ts"))).toBe("Foo");
+  });
+
+  it("keeps inner dots, dropping only the last extension", () => {
+    expect(stem(at("p", "src", "foo.config.ts"))).toBe("foo.config");
+  });
+
+  it("keeps the declaration infix", () => {
+    expect(stem(at("p", "src", "types.d.ts"))).toBe("types.d");
+  });
+
+  it("returns the whole name when there is no extension", () => {
+    expect(stem(at("p", "src", "Makefile"))).toBe("Makefile");
   });
 });

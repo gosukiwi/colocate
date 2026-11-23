@@ -8,3 +8,7 @@ export function isInsideDir(filePath: string, dir: string): boolean {
 export function isAtOrInsideDir(filePath: string, dir: string): boolean {
   return filePath === dir || isInsideDir(filePath, dir);
 }
+
+export function stem(filePath: string): string {
+  return path.basename(filePath, path.extname(filePath));
+}

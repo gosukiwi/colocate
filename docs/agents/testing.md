@@ -5,14 +5,14 @@ Vitest (`tests/**/*.test.ts`, fixtures excluded as test files). Behaviour tests 
 ```ts
 const messages = await lintFixture("private-sibling");
 expect(sortMessages(messages)).toEqual([
-  { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-  { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+  { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+  { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
 ]);
 ```
 
 The helper throws if a fixture file cannot be read, so empty results must not mean "nothing was looked at".
 
-Entry assertions get whole `FixtureMessage` objects (kind as `messageId`); narrow them with `pick(messages, "file", "line", "messageId")` from the same helper rather than a local `.map`. Choose the keys per assertion — `message` is the payload wherever the report names a module and a door (`entry-paths-alias`, `entry-sibling-prefix`, `entry-deep-past-door` assert it in full), and noise wherever the point is which line was flagged.
+Entry assertions get whole `FixtureMessage` objects (the `kind` field); narrow them with `pick(messages, "file", "line", "kind")` from the same helper rather than a local `.map`. Choose the keys per assertion — `message` is the payload wherever the report names a module and a door (`entry-paths-alias`, `entry-sibling-prefix`, `entry-deep-past-door` assert it in full), and noise wherever the point is which line was flagged.
 
 Finding **order** for one file is pinned by exactly one test: `two-findings-one-file` in `ownership.test.ts`, asserted **unsorted**. Do not delete that fixture or sort its assertion. See [ownership](ownership.md).
 

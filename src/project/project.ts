@@ -3,6 +3,8 @@ import { safeReadFile, safeRealpath } from "../lib/fs-safe.js";
 import {
   ownershipFindings,
   resolveRootDir,
+  type Moved,
+  type OwnershipResult,
   subjectFor,
   type Subject,
 } from "./findings/index.js";
@@ -21,9 +23,15 @@ export type FindingKind =
   | "reachesPastEntry"
   | "namedDoorReexport";
 
+export type MessageId =
+  | FindingKind
+  | "privateOutsideStandaloneOwner"
+  | "privateOutsideStandaloneOwnerOnly";
+
 export interface Finding {
   rule: RuleName;
   kind: FindingKind;
+  messageId: MessageId;
   file: string;
   range?: [number, number];
   data: Record<string, string>;
@@ -48,20 +56,46 @@ function displayDir(
   return relative === "" ? "./" : `${relative}/`;
 }
 
+function displayMoved(
+  display: (filePath: string) => string,
+  moved: Moved,
+): string {
+  return moved.isDir ? displayDir(display, moved.path) : display(moved.path);
+}
+
+function standaloneData(
+  result: OwnershipResult,
+  display: (filePath: string) => string,
+): Record<string, string> {
+  switch (result.messageId) {
+    case "privateOutsideStandaloneOwner":
+      return {
+        owner: display(result.owner),
+        moving: displayMoved(display, result.moving),
+      };
+    case "privateOutsideStandaloneOwnerOnly":
+      return { owner: display(result.owner) };
+    default:
+      return {};
+  }
+}
+
 function ownershipFindingsFor(
   subject: Subject,
   options: Options,
   cwd: string,
   display: (filePath: string) => string,
 ): Finding[] {
-  return ownershipFindings(subject, cwd, options.layers).map(
-    ({ kind, destination }) => ({
-      rule: "ownership",
-      kind,
-      file: subject.file,
-      data: { destination: displayDir(display, destination) },
-    }),
-  );
+  return ownershipFindings(subject, cwd, options.layers).map((result) => ({
+    rule: "ownership",
+    kind: result.kind,
+    messageId: result.messageId,
+    file: subject.file,
+    data: {
+      destination: displayDir(display, result.destination),
+      ...standaloneData(result, display),
+    },
+  }));
 }
 
 function crossingFindings(
@@ -79,6 +113,7 @@ function crossingFindings(
       findings.push({
         rule: "entry",
         kind: "reachesPastEntry",
+        messageId: "reachesPastEntry",
         file: subject.file,
         range: [start, end],
         data: {
@@ -105,6 +140,7 @@ function reexportFindings(
     ({ target, pos, end }) => ({
       rule: "entry",
       kind: "namedDoorReexport",
+      messageId: "namedDoorReexport",
       file: subject.file,
       range: [pos, end],
       data: {

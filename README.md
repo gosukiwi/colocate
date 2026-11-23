@@ -226,6 +226,8 @@ With `--format json`, one JSON object goes to stdout:
 }
 ```
 
+For `ownership` Findings, `data.destination` is the directory to move into (relative to the working directory, with a trailing `/`). When a `privateOutsideOwner` Finding's owner is a standalone file, `data` also has `owner` and usually `moving`: `moving` is the file, or its folder when the file is that folder's entry, and both it and `owner` must move into `destination`, which may not exist yet. When `moving` already is, or sits inside, `destination`, it is omitted and only `owner` moves.
+
 `line` and `column` are omitted for file-level Findings. `staleBaseline` appears only when the Baseline holds entries that no longer occur. If colocate itself fails (bad config, unreadable baseline), the JSON is `{ "error": "<message>" }`.
 
 ## Exit codes

@@ -7,11 +7,11 @@ import { openProject } from "../src/project/project.js";
 import { validateOptions } from "../src/options.js";
 
 function sortMessages(
-  messages: { file: string; messageId: string }[],
-): { file: string; messageId: string }[] {
+  messages: { file: string; kind: string }[],
+): { file: string; kind: string }[] {
   return [...messages].sort((a, b) => {
     const fileOrder = a.file.localeCompare(b.file);
-    return fileOrder !== 0 ? fileOrder : a.messageId.localeCompare(b.messageId);
+    return fileOrder !== 0 ? fileOrder : a.kind.localeCompare(b.kind);
   });
 }
 
@@ -84,12 +84,12 @@ describe("robustness", () => {
       .flatMap((file) =>
         project.findings(file).map((finding) => ({
           file: path.relative(fixture, file),
-          messageId: finding.kind,
+          kind: finding.kind,
         })),
       );
 
     expect(found).toEqual([
-      { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+      { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
     ]);
   });
 
@@ -123,7 +123,7 @@ describe("robustness", () => {
     const cwd = path.join(outer, "__tests__/repo");
     try {
       expect(await lintFixture(cwd, { root: "src" }, ["src"])).toEqual([
-        { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
+        { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
       ]);
     } finally {
       fs.rmSync(outer, { recursive: true, force: true });
@@ -140,9 +140,7 @@ describe("robustness", () => {
     fs.symlinkSync("../realsub", path.join(dir, "src/Foo/sub"));
     try {
       const messages = await lintFixture(dir, { root: "src" }, ["src"]);
-      expect(messages.filter((m) => m.messageId === "singletonFolder")).toEqual(
-        [],
-      );
+      expect(messages.filter((m) => m.kind === "singletonFolder")).toEqual([]);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -154,14 +152,14 @@ describe("robustness", () => {
       "tools",
     ]);
     expect(sortMessages(messages)).toEqual([
-      { file: "src/Feature/Feature.ts", messageId: "singletonFolder" },
+      { file: "src/Feature/Feature.ts", kind: "singletonFolder" },
     ]);
   });
 
   it("defaults root to the working directory", async () => {
     const messages = await lintFixture("root-drop", {}, ["."]);
     expect(sortMessages(messages)).toEqual([
-      { file: "Foo/Foo.ts", messageId: "singletonFolder" },
+      { file: "Foo/Foo.ts", kind: "singletonFolder" },
     ]);
   });
 
@@ -201,8 +199,8 @@ describe("robustness", () => {
     try {
       const messages = await lintFixture(dir, { root: "src" }, ["src"]);
       expect(sortMessages(messages)).toEqual([
-        { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
-        { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
+        { file: "src/pages/helper.ts", kind: "privateOutsideOwner" },
+        { file: "src/pages/MyPage/MyPage.ts", kind: "singletonFolder" },
       ]);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });

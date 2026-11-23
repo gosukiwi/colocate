@@ -10,7 +10,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -59,7 +59,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 2,
         message:
           "'src/Outer/Inner/deep.ts' is inside module 'src/Outer/Inner'; import it through 'src/Outer/Inner/Inner.ts', or move it out of 'src/Outer/Inner' if it is not part of it.",
@@ -74,7 +74,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/index.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -87,7 +87,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/types.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -102,14 +102,14 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/pages/index.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/pages/Feature/helper.ts' is inside module 'src/pages/Feature'; import it through 'src/pages/Feature/Feature.ts', or move it out of 'src/pages/Feature' if it is not part of it.",
       },
       {
         file: "src/pages/index.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 2,
         message:
           "'src/pages/Feature/named.ts' is inside module 'src/pages/Feature'; import it through 'src/pages/Feature/Feature.ts', or move it out of 'src/pages/Feature' if it is not part of it.",
@@ -122,14 +122,14 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/viaEquals.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 4,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -144,7 +144,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -157,7 +157,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 4,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -174,7 +174,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.cjs",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/helper.cjs' is inside module 'src/Feature'; import it through 'src/Feature/Feature.cjs', or move it out of 'src/Feature' if it is not part of it.",
@@ -191,7 +191,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -208,14 +208,14 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.js",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 6,
         message:
           "'src/Feature/helper.js' is inside module 'src/Feature'; import it through 'src/Feature/Feature.js', or move it out of 'src/Feature' if it is not part of it.",
       },
       {
         file: "src/app.js",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 9,
         message:
           "'src/Feature/helper.js' is inside module 'src/Feature'; import it through 'src/Feature/Feature.js', or move it out of 'src/Feature' if it is not part of it.",
@@ -231,7 +231,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 5,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -252,7 +252,7 @@ describe("entry rule", () => {
     expect(messages).toEqual([
       {
         file: "src/app.ts",
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
         line: 1,
         message:
           "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
@@ -285,9 +285,9 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-type-import-node", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
-      { file: "src/app.ts", line: 1, messageId: "reachesPastEntry" },
-      { file: "src/app.ts", line: 2, messageId: "reachesPastEntry" },
+    expect(pick(messages, "file", "line", "kind")).toEqual([
+      { file: "src/app.ts", line: 1, kind: "reachesPastEntry" },
+      { file: "src/app.ts", line: 2, kind: "reachesPastEntry" },
     ]);
   });
 
@@ -295,9 +295,9 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-template-specifier", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
-      { file: "src/app.ts", line: 3, messageId: "reachesPastEntry" },
-      { file: "src/app.ts", line: 4, messageId: "reachesPastEntry" },
+    expect(pick(messages, "file", "line", "kind")).toEqual([
+      { file: "src/app.ts", line: 3, kind: "reachesPastEntry" },
+      { file: "src/app.ts", line: 4, kind: "reachesPastEntry" },
     ]);
   });
 
@@ -376,8 +376,8 @@ describe("entry rule", () => {
       "entry-require-inner-createrequire",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
-      { file: "src/app.ts", line: 5, messageId: "reachesPastEntry" },
+    expect(pick(messages, "file", "line", "kind")).toEqual([
+      { file: "src/app.ts", line: 5, kind: "reachesPastEntry" },
     ]);
   });
 
@@ -385,11 +385,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-reexport", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -401,11 +401,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-reexport-star", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -418,11 +418,11 @@ describe("entry rule", () => {
       "entry-named-door-reexport-star-as",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -435,11 +435,11 @@ describe("entry rule", () => {
       "entry-named-door-reexport-nested",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -458,11 +458,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-import-export", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -475,11 +475,11 @@ describe("entry rule", () => {
       "entry-named-door-import-export-as",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -491,11 +491,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-export-default", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -508,11 +508,11 @@ describe("entry rule", () => {
       "entry-named-door-export-const-alias",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -524,11 +524,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-require-export", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -543,11 +543,11 @@ describe("entry rule", () => {
         root: "src",
       },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -559,11 +559,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-import-equals", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -575,11 +575,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-createrequire", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 4,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -591,11 +591,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-mixed", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -608,8 +608,8 @@ describe("entry rule", () => {
       root: "src",
     });
     expect(
-      pick(messages, "file", "line", "messageId").filter(
-        (message) => message.messageId === "namedDoorReexport",
+      pick(messages, "file", "line", "kind").filter(
+        (message) => message.kind === "namedDoorReexport",
       ),
     ).toEqual([]);
   });
@@ -619,8 +619,8 @@ describe("entry rule", () => {
       root: "src",
     });
     expect(
-      pick(messages, "file", "line", "messageId").filter(
-        (message) => message.messageId === "namedDoorReexport",
+      pick(messages, "file", "line", "kind").filter(
+        (message) => message.kind === "namedDoorReexport",
       ),
     ).toEqual([]);
   });
@@ -630,8 +630,8 @@ describe("entry rule", () => {
       root: "src",
     });
     expect(
-      pick(messages, "file", "line", "messageId").filter(
-        (message) => message.messageId === "namedDoorReexport",
+      pick(messages, "file", "line", "kind").filter(
+        (message) => message.kind === "namedDoorReexport",
       ),
     ).toEqual([]);
   });
@@ -642,8 +642,8 @@ describe("entry rule", () => {
       { root: "src" },
     );
     expect(
-      pick(messages, "file", "line", "messageId").filter(
-        (message) => message.messageId === "namedDoorReexport",
+      pick(messages, "file", "line", "kind").filter(
+        (message) => message.kind === "namedDoorReexport",
       ),
     ).toEqual([]);
   });
@@ -654,21 +654,21 @@ describe("entry rule", () => {
       { root: "src" },
     );
     expect(
-      pick(messages, "file", "line", "messageId").sort((left, right) =>
-        left.messageId === right.messageId
+      pick(messages, "file", "line", "kind").sort((left, right) =>
+        left.kind === right.kind
           ? left.line - right.line
-          : left.messageId.localeCompare(right.messageId),
+          : left.kind.localeCompare(right.kind),
       ),
     ).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "reachesPastEntry",
+        kind: "reachesPastEntry",
       },
     ]);
   });
@@ -678,11 +678,11 @@ describe("entry rule", () => {
       "entry-named-door-export-const-require",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -694,11 +694,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-require-rename", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -711,11 +711,11 @@ describe("entry rule", () => {
       "entry-named-door-export-const-multi",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 3,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -729,8 +729,8 @@ describe("entry rule", () => {
       { root: "src" },
     );
     expect(
-      pick(messages, "file", "line", "messageId").filter(
-        (message) => message.messageId === "namedDoorReexport",
+      pick(messages, "file", "line", "kind").filter(
+        (message) => message.kind === "namedDoorReexport",
       ),
     ).toEqual([]);
   });
@@ -740,11 +740,11 @@ describe("entry rule", () => {
       "entry-named-door-export-before-import",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -757,11 +757,11 @@ describe("entry rule", () => {
       "entry-named-door-export-import-equals",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -774,16 +774,16 @@ describe("entry rule", () => {
       "entry-named-door-export-const-destructure",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 1,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -798,11 +798,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-assert-require", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -814,11 +814,11 @@ describe("entry rule", () => {
     const messages = await lintEntryFixture("entry-named-door-assert-export", {
       root: "src",
     });
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 2,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(
@@ -831,11 +831,11 @@ describe("entry rule", () => {
       "entry-named-door-alias-then-export",
       { root: "src" },
     );
-    expect(pick(messages, "file", "line", "messageId")).toEqual([
+    expect(pick(messages, "file", "line", "kind")).toEqual([
       {
         file: "src/Foo/Foo.ts",
         line: 3,
-        messageId: "namedDoorReexport",
+        kind: "namedDoorReexport",
       },
     ]);
     expect(messages[0]?.message).toBe(

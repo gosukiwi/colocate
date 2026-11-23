@@ -3,10 +3,15 @@ import path from "node:path";
 import { derivedFromGraph } from "../../lib/derived.js";
 import { classifyDirEntry, safeReaddir, safeStat } from "../../lib/fs-safe.js";
 import type { Graph } from "../../lib/graph.js";
+import { stem } from "../../lib/paths.js";
 import {
   getSharedColocationIssue,
-  privateOutsideOwnerDir,
+  movedWithStandaloneOwner,
+  ownerHome,
+  privateOutsideOwner,
   resolveLayerDirectories,
+  type Moved,
+  type Owner,
   type OwnershipContext,
 } from "./owners.js";
 import {
@@ -136,13 +141,65 @@ function isSingletonWrapperDirectory(
   }
 
   const dirName = path.basename(dir);
-  const fileBasename = path.basename(filename, path.extname(filename));
+  const fileBasename = stem(filename);
   return fileBasename === dirName || fileBasename === "index";
 }
 
-export interface OwnershipResult {
-  kind: OwnershipFinding;
-  destination: string;
+type PlainOwnershipFinding = Exclude<OwnershipFinding, "privateOutsideOwner">;
+
+export type OwnershipResult =
+  | {
+      kind: PlainOwnershipFinding;
+      messageId: PlainOwnershipFinding;
+      destination: string;
+    }
+  | {
+      kind: "privateOutsideOwner";
+      messageId: "privateOutsideOwner";
+      destination: string;
+    }
+  | {
+      kind: "privateOutsideOwner";
+      messageId: "privateOutsideStandaloneOwner";
+      destination: string;
+      owner: string;
+      moving: Moved;
+    }
+  | {
+      kind: "privateOutsideOwner";
+      messageId: "privateOutsideStandaloneOwnerOnly";
+      destination: string;
+      owner: string;
+    };
+
+function privateOutsideOwnerResult(
+  owner: Owner,
+  file: string,
+  graph: Graph,
+): OwnershipResult {
+  const destination = ownerHome(owner);
+  if (owner.kind === "folder") {
+    return {
+      kind: "privateOutsideOwner",
+      messageId: "privateOutsideOwner",
+      destination,
+    };
+  }
+  const moving = movedWithStandaloneOwner(file, owner, graph);
+  return moving === undefined
+    ? {
+        kind: "privateOutsideOwner",
+        messageId: "privateOutsideStandaloneOwnerOnly",
+        destination,
+        owner: owner.path,
+      }
+    : {
+        kind: "privateOutsideOwner",
+        messageId: "privateOutsideStandaloneOwner",
+        destination,
+        owner: owner.path,
+        moving,
+      };
 }
 
 export function ownershipFindings(
@@ -166,17 +223,22 @@ export function ownershipFindings(
   ) {
     findings.push({
       kind: "singletonFolder",
+      messageId: "singletonFolder",
       destination: path.dirname(dir),
     });
   }
 
-  const privateDir = privateOutsideOwnerDir(file, ctx);
-  if (privateDir !== undefined) {
-    findings.push({ kind: "privateOutsideOwner", destination: privateDir });
+  const owner = privateOutsideOwner(file, ctx);
+  if (owner !== undefined) {
+    findings.push(privateOutsideOwnerResult(owner, file, graph));
   }
   const sharedIssue = getSharedColocationIssue(file, ctx);
   if (sharedIssue !== undefined) {
-    findings.push({ kind: sharedIssue.kind, destination: sharedIssue.lca });
+    findings.push({
+      kind: sharedIssue.kind,
+      messageId: sharedIssue.kind,
+      destination: sharedIssue.lca,
+    });
   }
 
   return findings;

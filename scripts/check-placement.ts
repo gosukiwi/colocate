@@ -96,7 +96,7 @@ function emit(
 
 interface RuleReport {
   file: string;
-  messageId: string;
+  kind: string;
   message: string;
 }
 
@@ -117,7 +117,7 @@ function reportsFor(
       if (finding.rule === "entry") {
         entry.push({
           file,
-          messageId: finding.kind,
+          kind: finding.kind,
           message: formatMessage(finding),
         });
       } else {
@@ -201,7 +201,7 @@ for (let n = 0; n < CONFIGS; n += 1) {
     }
 
     for (const report of entry) {
-      if (report.messageId !== "reachesPastEntry") {
+      if (report.kind !== "reachesPastEntry") {
         continue;
       }
       entryReports += 1;
