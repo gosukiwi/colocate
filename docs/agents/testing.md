@@ -32,6 +32,7 @@ SEED=<n> npm run check:placement
 - `named-door.test.ts` — `isNamedDoor` unit tests
 - `graph.test.ts` / `walk.test.ts` — resolution, walk, skip rules, temp trees + symlinks; `graph.test.ts` also covers importer recovery when the specifier and on-disk path differ only by NFC/NFD, using the same filesystem probe as the `collectReExports` case in `owners.test.ts`
 - `parse.test.ts` — `extractImports`, including `scopeRequireBinding` cases: type-position import(), no-substitution templates, and spellings that must not become edges
+- `parse-cache.test.ts` — each graph file is parsed exactly once per `openProject` run, counted through a `vi.mock("typescript")` proxy over `createSourceFile` (mocking `parse.js` would miss the internal call in `extractImports`); fixture `parse-once`
 - `owners.test.ts` — layer glob expansion / memoisation, and the one `collectReExports` case that fixtures cannot express: an NFD sibling re-exported through its NFC spelling. That test probes the filesystem for normalization folding rather than reading `ts.sys.useCaseSensitiveFileNames` — the two are independent axes, and it is the fixture-free proof that `collectReExports` canonicalises at all on a case-sensitive volume.
 - `robustness.test.ts` — degradation cases: missing root, missing file, unreadable, deleted importer
 - `cli.test.ts` — `run`: arguments, output formats, exit codes
