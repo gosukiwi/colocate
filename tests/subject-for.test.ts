@@ -63,4 +63,15 @@ describe("subjectFor", () => {
     const file = path.join(root.rootDir, "Feature/helper.ts");
     expect(subjectFor(file, root, ignore, graph)).toBeUndefined();
   });
+
+  it("returns undefined for a file outside the root", () => {
+    const { root, graph, ignore } = setup("entry-reaches-past");
+    const outside = path.join(root.rootDir, "..", "outside.ts");
+    fs.writeFileSync(outside, "export const o = 1;\n");
+    try {
+      expect(subjectFor(outside, root, ignore, graph)).toBeUndefined();
+    } finally {
+      fs.rmSync(outside);
+    }
+  });
 });

@@ -1,13 +1,8 @@
-import entry from "./rules/entry.js";
-import ownership from "./rules/ownership.js";
-
-export default {
-  meta: {
-    name: "@gosukiwi/eslint-plugin-colocate",
-    version: "0.2.1",
-  },
-  rules: {
-    entry,
-    ownership,
-  },
-};
+export {
+  openProject,
+  type Finding,
+  type FindingKind,
+  type Project,
+} from "./project.js";
+export { validateOptions, type Options, type RuleName } from "./options.js";
+export { formatMessage } from "./messages.js";

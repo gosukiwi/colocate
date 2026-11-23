@@ -1,8 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { ESLint } from "eslint";
-import tsParser from "@typescript-eslint/parser";
-import plugin from "../src/index.js";
+import { formatMessage, openProject, validateOptions } from "../src/index.js";
 
 const CASE_DIR = path.join(fs.realpathSync("/tmp"), "fol-placement");
 const CONFIGS = Number(process.env.CONFIGS ?? 200);
@@ -102,45 +100,28 @@ interface RuleReport {
   message: string;
 }
 
-async function reportsFor(
+function reportsFor(
   dir: string,
   options: Record<string, unknown>,
-): Promise<{ ownership: Record<string, string[]>; entry: RuleReport[] }> {
-  const eslint = new ESLint({
-    cwd: dir,
-    overrideConfigFile: true,
-    overrideConfig: [
-      {
-        files: ["**/*.ts"],
-        plugins: { p: plugin },
-        rules: {
-          "p/ownership": ["error", options],
-          "p/entry": [
-            "error",
-            {
-              root: options.root,
-              ...(options.ignore ? { ignore: options.ignore } : {}),
-            },
-          ],
-        },
-        languageOptions: {
-          parser: tsParser,
-          parserOptions: { sourceType: "module", ecmaVersion: 2022 },
-        },
-      },
-    ],
-  });
-
+): { ownership: Record<string, string[]>; entry: RuleReport[] } {
+  const project = openProject(validateOptions(options), dir);
+  const srcDir = path.join(dir, "src") + path.sep;
   const ownership: Record<string, string[]> = {};
   const entry: RuleReport[] = [];
-  for (const result of await eslint.lintFiles(["src"])) {
-    const file = path.relative(dir, result.filePath);
-    for (const message of result.messages) {
-      const id = message.messageId ?? `FATAL:${message.message}`;
-      if (message.ruleId === "p/entry") {
-        entry.push({ file, messageId: id, message: message.message });
+  for (const absolute of project.files()) {
+    if (!absolute.startsWith(srcDir)) {
+      continue;
+    }
+    const file = path.relative(dir, absolute);
+    for (const finding of project.findings(absolute)) {
+      if (finding.rule === "entry") {
+        entry.push({
+          file,
+          messageId: finding.kind,
+          message: formatMessage(finding),
+        });
       } else {
-        (ownership[file] ??= []).push(id);
+        (ownership[file] ??= []).push(finding.kind);
       }
     }
   }
@@ -211,7 +192,7 @@ for (let n = 0; n < CONFIGS; n += 1) {
       placement,
       barrelInOwner,
     );
-    const { ownership, entry } = await reportsFor(dir, options);
+    const { ownership, entry } = reportsFor(dir, options);
     const own = ownership[subjectFile] ?? [];
     lints += 1;
     matrix.push(`${placement.padEnd(22)} ${own.join(",") || "(clean)"}`);

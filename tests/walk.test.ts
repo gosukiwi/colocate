@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { getGates } from "../src/lib/named-door/index.js";
-import { getGraph } from "../src/lib/findings/index.js";
 import { buildGraph } from "../src/lib/graph.js";
 import { resolveSpecifier } from "../src/lib/resolve.js";
 
@@ -306,111 +305,5 @@ describe("resolution fallbacks", () => {
     expect(resolveSpecifier("./b", path.join(dir, "src"))).toBe(
       path.join(dir, "src/b.cts"),
     );
-  });
-});
-
-describe("caching with a symlinked root", () => {
-  it("reuses the cached graph when a symlinked path is ignored", () => {
-    const dir = project({
-      "src/zzz/Widget.ts": "export const w = 1;\n",
-      "src/pages/helper.ts": "export const h = 1;\n",
-    });
-    link(dir, "zzz", "src/aaa");
-
-    const root = path.join(dir, "src");
-    const current = path.join(dir, "src/zzz/Widget.ts");
-
-    const first = getGraph(root, ["aaa/**"], current);
-    expect(getGraph(root, ["aaa/**"], current)).toBe(first);
-  });
-
-  it("rebuilds when a file changes size but keeps its timestamp", () => {
-    const dir = project({
-      "src/a.ts": 'import "./b";\n',
-      "src/b.ts": "export const b = 1;\n",
-    });
-    const root = path.join(dir, "src");
-    const current = path.join(dir, "src/a.ts");
-    const other = path.join(dir, "src/b.ts");
-
-    const pinned = 1_000_000;
-    fs.utimesSync(other, pinned, pinned);
-    const first = getGraph(root, [], current);
-
-    fs.writeFileSync(other, "export const b = 222222222;\n");
-    fs.utimesSync(other, pinned, pinned);
-
-    expect(getGraph(root, [], current)).not.toBe(first);
-  });
-
-  it("rebuilds when a same-size edit preserves the timestamp", () => {
-    const dir = project({
-      "src/a.ts": 'import "./x";\n',
-      "src/x.ts": "export const x = 1;\n",
-      "src/y.ts": "export const y = 1;\n",
-    });
-    const root = path.join(dir, "src");
-    const edited = path.join(dir, "src/a.ts");
-    const pinned = 1_000_000;
-    fs.utimesSync(edited, pinned, pinned);
-
-    const first = getGraph(root, [], edited);
-    expect(first.importers.get(path.join(dir, "src/x.ts"))).toEqual([edited]);
-
-    fs.writeFileSync(edited, 'import "./y";\n');
-    fs.utimesSync(edited, pinned, pinned);
-
-    const second = getGraph(root, [], edited);
-    expect(second).not.toBe(first);
-    expect(second.importers.get(path.join(dir, "src/y.ts"))).toEqual([edited]);
-  });
-
-  it("rebuilds when a config reached through extends changes", () => {
-    const dir = project({
-      "tsconfig.base.json": JSON.stringify({ compilerOptions: {} }),
-      "tsconfig.json": JSON.stringify({ extends: "./tsconfig.base.json" }),
-      "src/a.ts": 'import "./b";\n',
-      "src/b.ts": "export const b = 1;\n",
-    });
-    const root = path.join(dir, "src");
-    const current = path.join(dir, "src/a.ts");
-
-    const first = getGraph(root, [], current);
-    const later = new Date(Date.now() + 4000);
-    fs.utimesSync(path.join(dir, "tsconfig.base.json"), later, later);
-
-    expect(getGraph(root, [], current)).not.toBe(first);
-  });
-
-  it("reuses the cached graph when linting a file the walk skipped", () => {
-    const dir = project({
-      "src/main.ts": "export const m = 1;\n",
-      "src/gen/Foo.ts": "export const f = 1;\n",
-      "src/dist/bundle.ts": "export const b = 1;\n",
-    });
-    const root = path.join(dir, "src");
-
-    const first = getGraph(root, ["gen"], path.join(dir, "src/main.ts"));
-    expect(getGraph(root, ["gen"], path.join(dir, "src/gen/Foo.ts"))).toBe(
-      first,
-    );
-    expect(getGraph(root, ["gen"], path.join(dir, "src/dist/bundle.ts"))).toBe(
-      first,
-    );
-  });
-
-  it("reuses the cached graph when the root is reached through a symlink", () => {
-    const dir = project({
-      "real/tsconfig.json": JSON.stringify({ compilerOptions: {} }),
-      "real/src/a.ts": 'import "./b";\n',
-      "real/src/b.ts": "export const b = 1;\n",
-    });
-    link(dir, "real", "linked");
-
-    const root = path.join(dir, "linked/src");
-    const current = path.join(dir, "real/src/a.ts");
-
-    const first = getGraph(root, [], current);
-    expect(getGraph(root, [], current)).toBe(first);
   });
 });

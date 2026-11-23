@@ -4,7 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getGraph } from "../src/lib/findings/index.js";
 import {
   buildGraph,
   canonicalGraphPath,
@@ -84,112 +83,10 @@ describe("isTestFile", () => {
   });
 });
 
-describe("getGraph", () => {
-  it("builds production import graph and caches by root + ignoreGlobs", () => {
-    const rootDir = fs.realpathSync(fixtureRoot);
-    const aPath = path.join(rootDir, "src/a.ts");
-    const bPath = path.join(rootDir, "src/b.ts");
-    const cTestPath = path.join(rootDir, "src/c.test.ts");
-
-    const graph = getGraph(rootDir, [], aPath);
-
-    expect(graph.importers.get(bPath)).toEqual([aPath]);
-    expect(graph.files).toEqual([aPath, bPath]);
-    expect(graph.files).not.toContain(cTestPath);
-
-    const cached = getGraph(rootDir, [], aPath);
-    expect(cached).toBe(graph);
-  });
-
-  it("rebuilds the cached graph when any tracked file changes, not just the current one", () => {
-    const rootDir = fs.realpathSync(fixtureRoot);
-    const aPath = path.join(rootDir, "src/a.ts");
-    const bPath = path.join(rootDir, "src/b.ts");
-
-    const first = getGraph(rootDir, [], aPath);
-    expect(first.importers.get(bPath)).toEqual([aPath]);
-
-    const later = new Date(Date.now() + 2000);
-    fs.utimesSync(bPath, later, later);
-
-    const second = getGraph(rootDir, [], aPath);
-    expect(second).not.toBe(first);
-    expect(second.importers.get(bPath)).toEqual([aPath]);
-
-    const cached = getGraph(rootDir, [], aPath);
-    expect(cached).toBe(second);
-  });
-
-  it("reuses the cached graph when currentFile is outside rootDir", () => {
-    const rootDir = fs.realpathSync(fixtureRoot);
-    const aPath = path.join(rootDir, "src/a.ts");
-
-    const first = getGraph(rootDir, [], aPath);
-
-    const outsideFile = path.join(
-      os.tmpdir(),
-      `colocate-outside-${process.pid}.ts`,
-    );
-    try {
-      fs.writeFileSync(outsideFile, "export const x = 1;\n");
-      const second = getGraph(rootDir, [], fs.realpathSync(outsideFile));
-      expect(second).toBe(first);
-    } finally {
-      fs.rmSync(outsideFile, { force: true });
-    }
-  });
-
-  it("rebuilds the cached graph when a new production file appears under rootDir", () => {
-    const rootDir = fs.realpathSync(fixtureRoot);
-    const aPath = path.join(rootDir, "src/a.ts");
-    const newFile = path.join(rootDir, "src/new-file.ts");
-
-    const first = getGraph(rootDir, [], aPath);
-
-    try {
-      fs.writeFileSync(newFile, "export const newFile = 1;\n");
-      const second = getGraph(rootDir, [], fs.realpathSync(newFile));
-      expect(second).not.toBe(first);
-      expect(second.files).toContain(fs.realpathSync(newFile));
-    } finally {
-      fs.rmSync(newFile, { force: true });
-    }
-  });
-
-  it("rebuilds the cached graph when a new production file appears and currentFile is an already-known file", () => {
-    const rootDir = fs.realpathSync(fixtureRoot);
-    const aPath = path.join(rootDir, "src/a.ts");
-    const newFile = path.join(rootDir, "src/new-file.ts");
-
-    const first = getGraph(rootDir, [], aPath);
-
-    try {
-      fs.writeFileSync(newFile, "export const newFile = 1;\n");
-      const second = getGraph(rootDir, [], aPath);
-      expect(second).not.toBe(first);
-      expect(second.files).toContain(fs.realpathSync(newFile));
-    } finally {
-      fs.rmSync(newFile, { force: true });
-    }
-  });
-
-  it("rebuilds the cached graph when tsconfig mtime changes", () => {
-    const rootDir = fs.realpathSync(path.join(aliasPrivateFixtureRoot, "src"));
-    const mainPath = path.join(rootDir, "main.ts");
-    const tsconfigPath = path.join(aliasPrivateFixtureRoot, "tsconfig.json");
-
-    const first = getGraph(rootDir, [], mainPath);
-
-    const later = new Date(Date.now() + 2000);
-    fs.utimesSync(tsconfigPath, later, later);
-
-    const second = getGraph(rootDir, [], mainPath);
-    expect(second).not.toBe(first);
-  });
-
+describe("buildGraph resolution", () => {
   it("resolves the longest matching path alias prefix", () => {
     const rootDir = fixture("alias-longest-prefix");
-    const graph = getGraph(rootDir, [], path.join(rootDir, "src/main.ts"));
+    const graph = buildGraph(rootDir, []);
 
     expect(
       graph.importers.get(path.join(rootDir, "src/core/Thing.ts")),
@@ -202,7 +99,7 @@ describe("getGraph", () => {
   it("resolves exact path aliases and falls back to later path targets", () => {
     const rootDir = fixture("alias-shapes");
     const mainPath = path.join(rootDir, "src/main.ts");
-    const graph = getGraph(rootDir, [], mainPath);
+    const graph = buildGraph(rootDir, []);
 
     expect(graph.importers.get(path.join(rootDir, "src/lib/thing.ts"))).toEqual(
       [mainPath],
@@ -217,140 +114,10 @@ describe("getGraph", () => {
     const aPath = path.join(rootDir, "src/a.ts");
     const bPath = path.join(rootDir, "src/b.ts");
 
-    const graph = getGraph(rootDir, [], aPath);
+    const graph = buildGraph(rootDir, []);
 
     expect(graph.importers.get(bPath)).toEqual([aPath]);
     expect(graph.files).toEqual([aPath, bPath]);
-  });
-
-  it("stats walked directories before reading their entries when building a cached graph", () => {
-    const dir = fs.realpathSync(tempDir("colocate-dir-stamp-order-"));
-    const srcDir = path.join(dir, "src");
-    fs.mkdirSync(srcDir, { recursive: true });
-    fs.writeFileSync(path.join(srcDir, "a.ts"), "export const a = 1;\n");
-    const aPath = fs.realpathSync(path.join(srcDir, "a.ts"));
-    const walkedDir = fs.realpathSync(srcDir);
-
-    const events: Array<{ kind: "stat" | "readdir"; path: string }> = [];
-    const originalStat = fs.statSync.bind(fs);
-    const originalReaddir = fs.readdirSync.bind(fs);
-
-    const statSpy = vi
-      .spyOn(fs, "statSync")
-      .mockImplementation((filePath, ...args) => {
-        const resolved =
-          typeof filePath === "string"
-            ? fs.realpathSync(filePath)
-            : String(filePath);
-        if (resolved === walkedDir) {
-          events.push({ kind: "stat", path: resolved });
-        }
-        return originalStat(filePath as fs.PathLike, ...args);
-      });
-
-    const readdirSpy = vi
-      .spyOn(fs, "readdirSync")
-      .mockImplementation((filePath, ...args) => {
-        const resolved =
-          typeof filePath === "string"
-            ? fs.realpathSync(filePath)
-            : String(filePath);
-        if (resolved === walkedDir) {
-          events.push({ kind: "readdir", path: resolved });
-        }
-        return originalReaddir(
-          filePath as Parameters<typeof fs.readdirSync>[0],
-          ...(args as Parameters<typeof fs.readdirSync> extends [
-            unknown,
-            ...infer R,
-          ]
-            ? R
-            : never),
-        );
-      });
-
-    try {
-      getGraph(srcDir, [], aPath);
-    } finally {
-      statSpy.mockRestore();
-      readdirSpy.mockRestore();
-    }
-
-    const firstStat = events.findIndex((event) => event.kind === "stat");
-    const firstReaddir = events.findIndex((event) => event.kind === "readdir");
-    expect(firstStat).toBeGreaterThanOrEqual(0);
-    expect(firstReaddir).toBeGreaterThanOrEqual(0);
-    expect(firstStat).toBeLessThan(firstReaddir);
-  });
-
-  it("stats tracked files before reading them when building a cached graph", () => {
-    const base = fs.realpathSync(tempDir("colocate-stamp-order-"));
-    const srcDir = path.join(base, "src");
-    fs.mkdirSync(srcDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(srcDir, "a.ts"),
-      'import "./b";\nexport const a = 1;\n',
-    );
-    fs.writeFileSync(path.join(srcDir, "b.ts"), "export const b = 1;\n");
-    const aPath = fs.realpathSync(path.join(srcDir, "a.ts"));
-    const bPath = fs.realpathSync(path.join(srcDir, "b.ts"));
-
-    const events: Array<{ kind: "stat" | "read"; path: string }> = [];
-    const originalStat = fs.statSync.bind(fs);
-    const originalRead = fs.readFileSync.bind(fs);
-
-    const statSpy = vi
-      .spyOn(fs, "statSync")
-      .mockImplementation((filePath, ...args) => {
-        const resolved =
-          typeof filePath === "string"
-            ? fs.realpathSync(filePath)
-            : String(filePath);
-        if (resolved === aPath || resolved === bPath) {
-          events.push({ kind: "stat", path: resolved });
-        }
-        return originalStat(filePath as fs.PathLike, ...args);
-      });
-
-    const readSpy = vi
-      .spyOn(fs, "readFileSync")
-      .mockImplementation((filePath, ...args) => {
-        const resolved =
-          typeof filePath === "string"
-            ? fs.realpathSync(filePath)
-            : String(filePath);
-        if (resolved === aPath || resolved === bPath) {
-          events.push({ kind: "read", path: resolved });
-        }
-        return originalRead(
-          filePath as Parameters<typeof fs.readFileSync>[0],
-          ...(args as Parameters<typeof fs.readFileSync> extends [
-            unknown,
-            ...infer R,
-          ]
-            ? R
-            : never),
-        );
-      });
-
-    try {
-      getGraph(srcDir, [], aPath);
-    } finally {
-      statSpy.mockRestore();
-      readSpy.mockRestore();
-    }
-
-    for (const tracked of [aPath, bPath]) {
-      const firstStat = events.findIndex(
-        (event) => event.kind === "stat" && event.path === tracked,
-      );
-      const firstRead = events.findIndex(
-        (event) => event.kind === "read" && event.path === tracked,
-      );
-      expect(firstStat).toBeGreaterThanOrEqual(0);
-      expect(firstRead).toBeGreaterThanOrEqual(0);
-      expect(firstStat).toBeLessThan(firstRead);
-    }
   });
 
   it("resolves a bare directory specifier to its index file", () => {
@@ -412,7 +179,7 @@ describe("canonicalGraphPath", () => {
         'import "./Feature/FEATURE";\n',
       );
 
-      const graph = getGraph(srcDir, [], entryPath);
+      const graph = buildGraph(srcDir, []);
       const settings = getGraphResolutionSettings(graph);
 
       const wrongCaseEntry = resolveSpecifier(
@@ -575,7 +342,7 @@ describe("getGraphResolutionSettings", () => {
       }),
     );
 
-    const graph = getGraph(srcDir, [], path.join(srcDir, "a.ts"));
+    const graph = buildGraph(srcDir, []);
     const settings = getGraphResolutionSettings(graph);
 
     expect(settings.options.paths).toEqual({ "@/*": ["src/*"] });

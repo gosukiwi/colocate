@@ -5,12 +5,6 @@ export {
   type SingletonDirectoryStats,
 } from "./findings.js";
 export {
-  getGraph,
-  REVALIDATE_AFTER_MS,
-  stampIsAmbiguous,
-  type VisitToken,
-} from "./graph-cache.js";
-export {
   collectLayerDirectories,
   collectReExports,
   getColocationConsumers,
@@ -25,9 +19,4 @@ export {
   type OwnershipContext,
 } from "./owners.js";
 export { resolveRootDir } from "./root.js";
-export {
-  resolveSubject,
-  resolvedLintRoot,
-  subjectFor,
-  type Subject,
-} from "./subject.js";
+export { subjectFor, type Subject } from "./subject.js";
