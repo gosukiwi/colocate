@@ -20,6 +20,11 @@ export interface OwnershipContext {
   layerDirs: string[];
 }
 
+export interface SharedIssue {
+  kind: "sharedTooHigh" | "sharedInsideOwner";
+  lca: string;
+}
+
 const reExportsByGraph = derivedFromGraph(() => new Map<string, string[]>());
 
 function scanReExports(indexFile: string, dir: string, graph: Graph): string[] {
@@ -449,37 +454,39 @@ function collectConsumerOwners(
   return owners;
 }
 
-export function isPrivateOutsideOwner(
+function ownerDir(owner: Owner): string {
+  return owner.kind === "folder" ? owner.path : path.dirname(owner.path);
+}
+
+function isOutsideOwner(filePath: string, owner: Owner): boolean {
+  return owner.kind === "folder"
+    ? !isInsideDir(filePath, owner.path)
+    : filePath !== owner.path;
+}
+
+export function privateOutsideOwnerDir(
   filePath: string,
   ctx: OwnershipContext,
-): boolean {
+): string | undefined {
   if (shouldSkipColocation(filePath, ctx)) {
-    return false;
+    return undefined;
   }
 
   const owners = collectConsumerOwners(filePath, ctx);
 
   if (owners.size !== 1) {
-    return false;
+    return undefined;
   }
 
   if (collectExtraShellOwners(filePath, ctx, owners).size > 0) {
-    return false;
+    return undefined;
   }
 
   const owner = owners.values().next().value;
-  if (owner === undefined) {
-    return false;
+  if (owner === undefined || !isOutsideOwner(filePath, owner)) {
+    return undefined;
   }
-  if (owner.kind === "folder") {
-    return !isInsideDir(filePath, owner.path);
-  }
-
-  return filePath !== owner.path;
-}
-
-function ownerDir(owner: Owner): string {
-  return owner.kind === "folder" ? owner.path : path.dirname(owner.path);
+  return ownerDir(owner);
 }
 
 function longestCommonAncestor(dirs: string[]): string {
@@ -554,7 +561,7 @@ function evaluateSharedPosition(
   filePath: string,
   ctx: OwnershipContext,
   owners: Map<string, Owner>,
-): "sharedTooHigh" | "sharedInsideOwner" | undefined {
+): SharedIssue | undefined {
   const ownerDirs = [...new Set([...owners.values()].map(ownerDir))];
   const lca = longestCommonAncestor(ownerDirs);
 
@@ -577,11 +584,11 @@ function evaluateSharedPosition(
   });
 
   if (containing.length > 0) {
-    return "sharedInsideOwner";
+    return { kind: "sharedInsideOwner", lca };
   }
 
   if (!isInsideDir(filePath, lca)) {
-    return "sharedTooHigh";
+    return { kind: "sharedTooHigh", lca };
   }
   return undefined;
 }
@@ -589,7 +596,7 @@ function evaluateSharedPosition(
 export function getSharedColocationIssue(
   filePath: string,
   ctx: OwnershipContext,
-): "sharedTooHigh" | "sharedInsideOwner" | undefined {
+): SharedIssue | undefined {
   if (shouldSkipColocation(filePath, ctx)) {
     return undefined;
   }

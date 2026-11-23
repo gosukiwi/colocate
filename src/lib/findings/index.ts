@@ -2,6 +2,7 @@ export {
   ownershipFindings,
   singletonDirectoryStats,
   type OwnershipFinding,
+  type OwnershipResult,
   type SingletonDirectoryStats,
 } from "./findings.js";
 export {
@@ -12,10 +13,11 @@ export {
   getSharedColocationIssue,
   getShells,
   isLayerPublicModule,
-  isPrivateOutsideOwner,
+  privateOutsideOwnerDir,
   resolveLayerDirectories,
   shouldSkipColocation,
   type Owner,
+  type SharedIssue,
   type OwnershipContext,
 } from "./owners.js";
 export { resolveRootDir } from "./root.js";

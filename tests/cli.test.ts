@@ -40,7 +40,7 @@ const importLine = fs
   .split("\n")[0]!;
 const importCol = importLine.indexOf('"./Feature/helper"') + 1;
 const entryMessage =
-  "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.";
+  "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.";
 
 const entryTree = {
   "src/app.ts": 'import { helper } from "./Feature/helper";\n',
@@ -144,9 +144,9 @@ describe("cli json output", () => {
           column: importCol,
           message: entryMessage,
           data: {
-            target: "Feature/helper.ts",
-            module: "Feature",
-            entry: "Feature/Feature.ts",
+            target: "src/Feature/helper.ts",
+            module: "src/Feature",
+            entry: "src/Feature/Feature.ts",
           },
         },
       ],

@@ -5,7 +5,7 @@ import { classifyDirEntry, safeReaddir, safeStat } from "../fs-safe.js";
 import type { Graph } from "../graph.js";
 import {
   getSharedColocationIssue,
-  isPrivateOutsideOwner,
+  privateOutsideOwnerDir,
   resolveLayerDirectories,
   type OwnershipContext,
 } from "./owners.js";
@@ -140,11 +140,16 @@ function isSingletonWrapperDirectory(
   return fileBasename === dirName || fileBasename === "index";
 }
 
+export interface OwnershipResult {
+  kind: OwnershipFinding;
+  destination: string;
+}
+
 export function ownershipFindings(
   subject: Subject,
   cwd: string,
   layers: string[],
-): OwnershipFinding[] {
+): OwnershipResult[] {
   const { realRootDir: rootDir, file, ignore } = subject;
   const dir = path.dirname(file);
   const graph = subject.graph();
@@ -153,21 +158,25 @@ export function ownershipFindings(
     rootDir,
     layerDirs: resolveLayerDirectories(graph, cwd, layers, rootDir),
   };
-  const findings: OwnershipFinding[] = [];
+  const findings: OwnershipResult[] = [];
 
   if (
     dir !== rootDir &&
     isSingletonWrapperDirectory(dir, file, rootDir, ignore, graph)
   ) {
-    findings.push("singletonFolder");
+    findings.push({
+      kind: "singletonFolder",
+      destination: path.dirname(dir),
+    });
   }
 
-  if (isPrivateOutsideOwner(file, ctx)) {
-    findings.push("privateOutsideOwner");
+  const privateDir = privateOutsideOwnerDir(file, ctx);
+  if (privateDir !== undefined) {
+    findings.push({ kind: "privateOutsideOwner", destination: privateDir });
   }
   const sharedIssue = getSharedColocationIssue(file, ctx);
   if (sharedIssue !== undefined) {
-    findings.push(sharedIssue);
+    findings.push({ kind: sharedIssue.kind, destination: sharedIssue.lca });
   }
 
   return findings;

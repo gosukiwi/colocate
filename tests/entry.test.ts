@@ -13,7 +13,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -62,7 +62,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 2,
         message:
-          "'Outer/Inner/deep.ts' is inside module 'Outer/Inner'; import it through 'Outer/Inner/Inner.ts', or move it out of 'Outer/Inner' if it is not part of it.",
+          "'src/Outer/Inner/deep.ts' is inside module 'src/Outer/Inner'; import it through 'src/Outer/Inner/Inner.ts', or move it out of 'src/Outer/Inner' if it is not part of it.",
       },
     ]);
   });
@@ -77,7 +77,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/index.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/index.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -90,7 +90,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/types.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/types.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -105,14 +105,14 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'pages/Feature/helper.ts' is inside module 'pages/Feature'; import it through 'pages/Feature/Feature.ts', or move it out of 'pages/Feature' if it is not part of it.",
+          "'src/pages/Feature/helper.ts' is inside module 'src/pages/Feature'; import it through 'src/pages/Feature/Feature.ts', or move it out of 'src/pages/Feature' if it is not part of it.",
       },
       {
         file: "src/pages/index.ts",
         messageId: "reachesPastEntry",
         line: 2,
         message:
-          "'pages/Feature/named.ts' is inside module 'pages/Feature'; import it through 'pages/Feature/Feature.ts', or move it out of 'pages/Feature' if it is not part of it.",
+          "'src/pages/Feature/named.ts' is inside module 'src/pages/Feature'; import it through 'src/pages/Feature/Feature.ts', or move it out of 'src/pages/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -125,14 +125,14 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/viaEquals.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/viaEquals.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
       {
         file: "src/app.ts",
         messageId: "reachesPastEntry",
         line: 4,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -147,7 +147,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -160,7 +160,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 4,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -177,7 +177,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/helper.cjs' is inside module 'Feature'; import it through 'Feature/Feature.cjs', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.cjs' is inside module 'src/Feature'; import it through 'src/Feature/Feature.cjs', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -194,7 +194,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -211,14 +211,14 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 6,
         message:
-          "'Feature/helper.js' is inside module 'Feature'; import it through 'Feature/Feature.js', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.js' is inside module 'src/Feature'; import it through 'src/Feature/Feature.js', or move it out of 'src/Feature' if it is not part of it.",
       },
       {
         file: "src/app.js",
         messageId: "reachesPastEntry",
         line: 9,
         message:
-          "'Feature/helper.js' is inside module 'Feature'; import it through 'Feature/Feature.js', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.js' is inside module 'src/Feature'; import it through 'src/Feature/Feature.js', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -234,7 +234,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 5,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -255,7 +255,7 @@ describe("entry rule", () => {
         messageId: "reachesPastEntry",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -331,7 +331,7 @@ describe("entry rule", () => {
         file: "src/app.ts",
         line: 1,
         message:
-          "'Feature/utils/deep.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/utils/deep.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -345,7 +345,7 @@ describe("entry rule", () => {
         file: "src/Featurex/importer.ts",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -359,7 +359,7 @@ describe("entry rule", () => {
         file: "src/app.ts",
         line: 1,
         message:
-          "'Feature/helper.ts' is inside module 'Feature'; import it through 'Feature/Feature.ts', or move it out of 'Feature' if it is not part of it.",
+          "'src/Feature/helper.ts' is inside module 'src/Feature'; import it through 'src/Feature/Feature.ts', or move it out of 'src/Feature' if it is not part of it.",
       },
     ]);
   });
@@ -393,7 +393,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -409,7 +409,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -426,7 +426,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -443,7 +443,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/nested/deep.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/nested/deep.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -466,7 +466,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -483,7 +483,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -499,7 +499,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -516,7 +516,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -532,7 +532,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -551,7 +551,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -567,7 +567,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -583,7 +583,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -599,7 +599,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -686,7 +686,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -702,7 +702,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -719,7 +719,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -748,7 +748,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -765,7 +765,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -787,10 +787,10 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
     expect(messages[1]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -806,7 +806,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -822,7 +822,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 
@@ -839,7 +839,7 @@ describe("entry rule", () => {
       },
     ]);
     expect(messages[0]?.message).toBe(
-      "Named door 'Foo/Foo.ts' re-exports 'Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
+      "Named door 'src/Foo/Foo.ts' re-exports 'src/Foo/sib.ts'; use an index.ts in the same folder for a multi-file public surface, or export only what this file declares.",
     );
   });
 

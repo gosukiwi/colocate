@@ -28,7 +28,6 @@ describe("subjectFor", () => {
     expect(subject?.file).toBe(file);
     expect(subject?.realRootDir).toBe(root.realRootDir);
     expect(subject?.graph()).toBe(graph);
-    expect(subject?.display(file)).toBe("Feature/helper.ts");
     expect(subject?.covers(file)).toBe(true);
   });
 

@@ -10,7 +10,6 @@ export interface Subject {
   readonly ignore: string[];
   graph(): Graph;
   covers(filePath: string): boolean;
-  display(filePath: string): string;
 }
 
 export function subjectFor(
@@ -39,7 +38,5 @@ export function subjectFor(
     covers: (filePath) =>
       isSourceFile(filePath) &&
       isInGraphScope(path.relative(realRootDir, filePath), ignore),
-    display: (filePath) =>
-      path.relative(realRootDir, filePath).split(path.sep).join("/"),
   };
 }

@@ -1,3 +1,4 @@
+import path from "node:path";
 import { safeReadFile, safeRealpath } from "./lib/fs-safe.js";
 import {
   ownershipFindings,
@@ -36,20 +37,41 @@ export interface Project {
   findings(file: string): Finding[];
 }
 
+function displayer(cwd: string): (filePath: string) => string {
+  const realCwd = safeRealpath(cwd) ?? cwd;
+  return (filePath) =>
+    path.relative(realCwd, filePath).split(path.sep).join("/");
+}
+
+function displayDir(
+  display: (filePath: string) => string,
+  dir: string,
+): string {
+  const relative = display(dir);
+  return relative === "" ? "./" : `${relative}/`;
+}
+
 function ownershipFindingsFor(
   subject: Subject,
   options: Options,
   cwd: string,
+  display: (filePath: string) => string,
 ): Finding[] {
-  return ownershipFindings(subject, cwd, options.layers).map((kind) => ({
-    rule: "ownership",
-    kind,
-    file: subject.file,
-    data: {},
-  }));
+  return ownershipFindings(subject, cwd, options.layers).map(
+    ({ kind, destination }) => ({
+      rule: "ownership",
+      kind,
+      file: subject.file,
+      data: { destination: displayDir(display, destination) },
+    }),
+  );
 }
 
-function crossingFindings(subject: Subject, content: string): Finding[] {
+function crossingFindings(
+  subject: Subject,
+  content: string,
+  display: (filePath: string) => string,
+): Finding[] {
   const findings: Finding[] = [];
   for (const { specifier, start, end } of extractImports(
     content,
@@ -63,9 +85,9 @@ function crossingFindings(subject: Subject, content: string): Finding[] {
         file: subject.file,
         range: [start, end],
         data: {
-          target: subject.display(c.target),
-          module: subject.display(c.dir),
-          entry: subject.display(c.entry),
+          target: display(c.target),
+          module: display(c.dir),
+          entry: display(c.entry),
         },
       });
     }
@@ -77,6 +99,7 @@ function reexportFindings(
   subject: Subject,
   graph: Graph,
   content: string,
+  display: (filePath: string) => string,
 ): Finding[] {
   if (!isNamedDoor(subject.file)) {
     return [];
@@ -88,21 +111,25 @@ function reexportFindings(
       file: subject.file,
       range: [pos, end],
       data: {
-        door: subject.display(subject.file),
-        target: subject.display(target),
+        door: display(subject.file),
+        target: display(target),
       },
     }),
   );
 }
 
-function entryFindingsFor(subject: Subject, graph: Graph): Finding[] {
+function entryFindingsFor(
+  subject: Subject,
+  graph: Graph,
+  display: (filePath: string) => string,
+): Finding[] {
   const content = safeReadFile(subject.file);
   if (content === undefined) {
     return [];
   }
   return [
-    ...crossingFindings(subject, content),
-    ...reexportFindings(subject, graph, content),
+    ...crossingFindings(subject, content, display),
+    ...reexportFindings(subject, graph, content, display),
   ].sort((a, b) => (a.range?.[0] ?? 0) - (b.range?.[0] ?? 0));
 }
 
@@ -115,6 +142,7 @@ export function openProject(options: Options, cwd: string): Project {
     return EMPTY_PROJECT;
   }
   const root = { rootDir, realRootDir };
+  const display = displayer(cwd);
   const graph = buildGraphFromFiles(
     collectSourceFiles(realRootDir, options.ignore).files,
     realRootDir,
@@ -135,10 +163,10 @@ export function openProject(options: Options, cwd: string): Project {
       }
       return [
         ...(options.rules.includes("ownership")
-          ? ownershipFindingsFor(subject, options, cwd)
+          ? ownershipFindingsFor(subject, options, cwd, display)
           : []),
         ...(options.rules.includes("entry")
-          ? entryFindingsFor(subject, graph)
+          ? entryFindingsFor(subject, graph, display)
           : []),
       ];
     },
