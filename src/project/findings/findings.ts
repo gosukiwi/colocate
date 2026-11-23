@@ -3,6 +3,7 @@ import path from "node:path";
 import { derivedFromGraph } from "../../lib/derived.js";
 import { classifyDirEntry, safeReaddir, safeStat } from "../../lib/fs-safe.js";
 import type { Graph } from "../../lib/graph.js";
+import { isAtOrInsideDir } from "../../lib/paths.js";
 import {
   isOwnerEntryFile,
   getSharedColocationIssue,
@@ -166,7 +167,7 @@ function privateOutsideOwnerResult(
     standalone: {
       owner: owner.path,
       movingIsDir,
-      ...(moving === destination ? {} : { moving }),
+      ...(isAtOrInsideDir(moving, destination) ? {} : { moving }),
     },
   };
 }

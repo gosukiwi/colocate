@@ -180,6 +180,27 @@ describe("openProject", () => {
   });
 
   it.each([
+    ["standalone-owner-helper-in-owner-folder", "src/x/helper.ts"],
+    ["standalone-owner-entry-in-owner-folder", "src/x/MyPage/MyPage.ts"],
+  ])(
+    "moves only the owner when the flagged file is already inside the destination (%s)",
+    (fixture, flagged) => {
+      const { cwd, project } = open(fixture, { root: "src" });
+      const found = project
+        .findings(path.join(cwd, flagged))
+        .filter((f) => f.kind === "privateOutsideOwner");
+      expect(found).toHaveLength(1);
+      expect(found[0]?.data).toEqual({
+        destination: "src/x/",
+        owner: "src/x.ts",
+      });
+      expect(formatMessage(found[0]!)).toBe(
+        "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
+      );
+    },
+  );
+
+  it.each([
     [
       "private-standalone-owner-grouped",
       ["main", "App", "MyPage/MyPage", "MyPage/helper"].map(
@@ -191,6 +212,10 @@ describe("openProject", () => {
       ["main", "App", "x/x", "x/MyPage/MyPage", "x/MyPage/helper"].map(
         (f) => `src/${f}.ts`,
       ),
+    ],
+    [
+      "standalone-owner-same-name-folder-grouped",
+      ["main", "App", "x/x", "x/index"].map((f) => `src/${f}.ts`),
     ],
   ])("reports nothing once %s follows the advice", (fixture, files) => {
     const { cwd, project } = open(fixture, { root: "src" });
