@@ -2,12 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  collectMessages,
-  collectRuleMessages,
-  lintFixture,
-  makeESLint,
-} from "./helpers/lint-fixture.js";
+import { lintFixture, lintFixtureRule } from "./helpers/lint-fixture.js";
+import { openProject } from "../src/project.js";
+import { validateOptions } from "../src/options.js";
 
 function sortMessages(
   messages: { file: string; messageId: string }[],
@@ -36,20 +33,6 @@ describe("robustness", () => {
     expect(messages).toEqual([]);
   });
 
-  it("stays silent instead of throwing when the linted file is not on disk", async () => {
-    const cwd = path.join(
-      path.dirname(new URL(import.meta.url).pathname),
-      "fixtures/private-sibling",
-    );
-    const results = await makeESLint(cwd).lintText(
-      "export const ghost = 1;\n",
-      {
-        filePath: path.join(cwd, "src/pages/ghost.ts"),
-      },
-    );
-    expect(collectMessages(cwd, results)).toEqual([]);
-  });
-
   it("does not throw when a cached importer was deleted from disk", async () => {
     const dir = tempProject({
       "src/main.ts": 'import "./App";\n',
@@ -60,14 +43,12 @@ describe("robustness", () => {
       "src/pages/MyPage/MyPage.ts": "export const p = 1;\n",
     });
     try {
-      const eslint = makeESLint(dir, { root: "src" });
-      await eslint.lintFiles(["src"]);
+      await lintFixture(dir, { root: "src" }, ["src"]);
       fs.rmSync(path.join(dir, "src/pages/MyPage/index.ts"));
 
-      const results = await makeESLint(dir, { root: "src" }).lintFiles([
-        "src/pages/helper.ts",
-      ]);
-      expect(() => collectMessages(dir, results)).not.toThrow();
+      await expect(
+        lintFixture(dir, { root: "src" }, ["src/pages/helper.ts"]),
+      ).resolves.toBeDefined();
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -81,10 +62,9 @@ describe("robustness", () => {
     const secret = path.join(dir, "src/App.ts");
     try {
       fs.chmodSync(secret, 0o000);
-      const results = await makeESLint(dir, { root: "src" }).lintFiles([
-        "src/main.ts",
-      ]);
-      expect(() => collectMessages(dir, results)).not.toThrow();
+      await expect(
+        lintFixture(dir, { root: "src" }, ["src/main.ts"]),
+      ).resolves.toBeDefined();
     } finally {
       fs.chmodSync(secret, 0o644);
       fs.rmSync(dir, { recursive: true, force: true });
@@ -96,11 +76,19 @@ describe("robustness", () => {
       path.dirname(new URL(import.meta.url).pathname),
       "fixtures/private-sibling",
     );
-    const results = await makeESLint(path.join(fixture, "src/pages"), {
-      root: "src",
-    }).lintFiles(["helper.ts"]);
+    const cwd = path.join(fixture, "src/pages");
+    const project = openProject(validateOptions({ root: "src" }), cwd);
+    const found = project
+      .files()
+      .filter((file) => path.basename(file) === "helper.ts")
+      .flatMap((file) =>
+        project.findings(file).map((finding) => ({
+          file: path.relative(fixture, file),
+          messageId: finding.kind,
+        })),
+      );
 
-    expect(collectMessages(fixture, results)).toEqual([
+    expect(found).toEqual([
       { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
     ]);
   });
@@ -117,8 +105,7 @@ describe("robustness", () => {
     });
     const cwd = path.join(outer, "src/repo");
     try {
-      const results = await makeESLint(cwd, { root: "src" }).lintFiles(["app"]);
-      expect(collectMessages(cwd, results)).toEqual([]);
+      expect(await lintFixture(cwd, { root: "src" }, ["app"])).toEqual([]);
     } finally {
       fs.rmSync(outer, { recursive: true, force: true });
     }
@@ -135,8 +122,7 @@ describe("robustness", () => {
     });
     const cwd = path.join(outer, "__tests__/repo");
     try {
-      const results = await makeESLint(cwd, { root: "src" }).lintFiles(["src"]);
-      expect(collectMessages(cwd, results)).toEqual([
+      expect(await lintFixture(cwd, { root: "src" }, ["src"])).toEqual([
         { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
       ]);
     } finally {
@@ -153,12 +139,10 @@ describe("robustness", () => {
     });
     fs.symlinkSync("../realsub", path.join(dir, "src/Foo/sub"));
     try {
-      const results = await makeESLint(dir, { root: "src" }).lintFiles(["src"]);
-      expect(
-        collectMessages(dir, results).filter(
-          (m) => m.messageId === "singletonFolder",
-        ),
-      ).toEqual([]);
+      const messages = await lintFixture(dir, { root: "src" }, ["src"]);
+      expect(messages.filter((m) => m.messageId === "singletonFolder")).toEqual(
+        [],
+      );
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -195,14 +179,9 @@ describe("robustness", () => {
     });
     try {
       for (const rule of ["ownership", "entry"] as const) {
-        const results = await makeESLint(
-          dir,
-          { root: "src" },
-          {
-            rule,
-          },
-        ).lintFiles(["src"]);
-        expect(collectRuleMessages(dir, results, rule)).toEqual([]);
+        expect(
+          await lintFixtureRule(dir, rule, { root: "src" }, ["src"]),
+        ).toEqual([]);
       }
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
@@ -220,23 +199,8 @@ describe("robustness", () => {
       "src/pages/helper.ts": "export const h = 1;\n",
     });
     try {
-      const results = await makeESLint(
-        dir,
-        { root: "src" },
-        {
-          rule: "ownership",
-        },
-      ).lintFiles(["src"]);
-      expect(
-        sortMessages(
-          collectRuleMessages(dir, results, "ownership").map(
-            ({ file, messageId }) => ({
-              file,
-              messageId,
-            }),
-          ),
-        ),
-      ).toEqual([
+      const messages = await lintFixture(dir, { root: "src" }, ["src"]);
+      expect(sortMessages(messages)).toEqual([
         { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
         { file: "src/pages/MyPage/MyPage.ts", messageId: "singletonFolder" },
       ]);

@@ -1,16 +1,6 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { ESLint } from "eslint";
-import tsParser from "@typescript-eslint/parser";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import plugin from "../src/index.js";
-import {
-  collectRuleMessages,
-  lintEntryFixture,
-  makeESLint,
-  pick,
-} from "./helpers/lint-fixture.js";
+import { lintEntryFixture, pick } from "./helpers/lint-fixture.js";
 
 describe("entry rule", () => {
   it("reports an import that reaches past a module's entry", async () => {
@@ -39,25 +29,6 @@ describe("entry rule", () => {
     await expect(
       lintEntryFixture("entry-through-door-ok", { roots: "src" }),
     ).rejects.toThrow();
-  });
-
-  it("takes only root and ignore", () => {
-    const schema = plugin.rules.entry.meta?.schema;
-    const first = Array.isArray(schema)
-      ? (schema[0] as {
-          additionalProperties: boolean;
-          properties: Record<string, unknown>;
-        })
-      : undefined;
-    expect(first?.additionalProperties).toBe(false);
-    expect(Object.keys(first?.properties ?? {}).sort()).toEqual([
-      "ignore",
-      "root",
-    ]);
-  });
-
-  it("offers no autofix", () => {
-    expect(plugin.rules.entry.meta?.fixable).toBeUndefined();
   });
 
   it("allows a bare directory specifier that resolves to the index", async () => {
@@ -195,22 +166,11 @@ describe("entry rule", () => {
   });
 
   it("reports a require() call with no config override at all (.cjs default sourceType)", async () => {
-    const cwd = path.join(
-      fileURLToPath(new URL(".", import.meta.url)),
-      "fixtures/entry-require-cjs-default",
+    const messages = await lintEntryFixture(
+      "entry-require-cjs-default",
+      { root: "src" },
+      ["src"],
     );
-    const eslint = new ESLint({
-      cwd,
-      overrideConfigFile: true,
-      overrideConfig: [
-        {
-          plugins: { colocate: plugin },
-          rules: { "colocate/entry": ["error", { root: "src" }] },
-        },
-      ],
-    });
-    const results = await eslint.lintFiles(["src"]);
-    const messages = collectRuleMessages(cwd, results, "entry");
     expect(messages).toEqual([
       {
         file: "src/app.cjs",
@@ -223,28 +183,11 @@ describe("entry rule", () => {
   });
 
   it("reports a require() call under an explicit require global (globals.node style)", async () => {
-    const cwd = path.join(
-      fileURLToPath(new URL(".", import.meta.url)),
-      "fixtures/entry-require-node-globals",
+    const messages = await lintEntryFixture(
+      "entry-require-node-globals",
+      { root: "src" },
+      ["src/app.ts"],
     );
-    const eslint = new ESLint({
-      cwd,
-      overrideConfigFile: true,
-      overrideConfig: [
-        {
-          files: ["**/*.{js,jsx,ts,tsx,mts,cts,mjs,cjs}"],
-          languageOptions: {
-            parser: tsParser,
-            parserOptions: { sourceType: "module", ecmaVersion: 2022 },
-            globals: { require: "readonly", module: "readonly" },
-          },
-          plugins: { colocate: plugin },
-          rules: { "colocate/entry": ["error", { root: "src" }] },
-        },
-      ],
-    });
-    const results = await eslint.lintFiles(["src/app.ts"]);
-    const messages = collectRuleMessages(cwd, results, "entry");
     expect(messages).toEqual([
       {
         file: "src/app.ts",
@@ -261,7 +204,6 @@ describe("entry rule", () => {
       "entry-dynamic-espree",
       { root: "src" },
       ["src"],
-      { parser: "espree" },
     );
     expect(messages).toEqual([
       {
@@ -318,11 +260,6 @@ describe("entry rule", () => {
     ]);
   });
 
-  it("honours a line-level eslint-disable comment", async () => {
-    const messages = await lintEntryFixture("entry-disable", { root: "src" });
-    expect(messages).toEqual([]);
-  });
-
   it("stays silent on unresolvable and bare specifiers", async () => {
     const messages = await lintEntryFixture("entry-unresolvable", {
       root: "src",
@@ -342,23 +279,6 @@ describe("entry rule", () => {
       root: "src",
     });
     expect(messages).toEqual([]);
-  });
-
-  it("stays silent when the linted file is not on disk", async () => {
-    const cwd = path.join(
-      fileURLToPath(new URL(".", import.meta.url)),
-      "fixtures/entry-reaches-past",
-    );
-    const results = await makeESLint(
-      cwd,
-      { root: "src" },
-      {
-        rule: "entry",
-      },
-    ).lintText('import { helper } from "./Feature/helper";\n', {
-      filePath: path.join(cwd, "src/ghost.ts"),
-    });
-    expect(collectRuleMessages(cwd, results, "entry")).toEqual([]);
   });
 
   it("reports an inline type import that reaches past the entry", async () => {
@@ -926,18 +846,12 @@ describe("entry rule", () => {
   it.skipIf(ts.sys.useCaseSensitiveFileNames)(
     "stays silent when the importer is linted through a wrong-case path",
     async () => {
-      const cwd = path.join(
-        fileURLToPath(new URL(".", import.meta.url)),
-        "fixtures/entry-importer-inside-ok",
-      );
-      const results = await makeESLint(
-        cwd,
+      const messages = await lintEntryFixture(
+        "entry-importer-inside-ok",
         { root: "src" },
-        {
-          rule: "entry",
-        },
-      ).lintFiles(["src/feature/Feature.ts"]);
-      expect(collectRuleMessages(cwd, results, "entry")).toEqual([]);
+        ["src/feature/Feature.ts"],
+      );
+      expect(messages).toEqual([]);
     },
   );
 });

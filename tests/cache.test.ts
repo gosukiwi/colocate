@@ -1,16 +1,106 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { Linter } from "eslint";
+import { ESLint, Linter } from "eslint";
 import tsParser from "@typescript-eslint/parser";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getGraph, REVALIDATE_AFTER_MS } from "../src/lib/findings/index.js";
 import plugin from "../src/index.js";
-import {
-  collectMessages,
-  collectRuleMessages,
-  makeESLint,
-} from "./helpers/lint-fixture.js";
+
+type RuleName = "ownership" | "entry";
+
+interface FixtureMessage {
+  file: string;
+  messageId: string;
+  line: number;
+  message: string;
+}
+
+function makeESLint(
+  cwd: string,
+  ruleOptions?: Record<string, unknown>,
+  options?: {
+    rule?: RuleName | RuleName[];
+  },
+): ESLint {
+  const languageOptions = {
+    parser: tsParser,
+    parserOptions: {
+      sourceType: "module",
+      ecmaVersion: 2022,
+    },
+  };
+  const ruleNames =
+    options?.rule === undefined
+      ? (["ownership"] as const)
+      : Array.isArray(options.rule)
+        ? options.rule
+        : [options.rule];
+
+  const rules: Record<string, [string, Record<string, unknown>]> = {};
+  for (const ruleName of ruleNames) {
+    rules[`colocate/${ruleName}`] = ["error", ruleOptions ?? {}];
+  }
+
+  return new ESLint({
+    cwd,
+    overrideConfigFile: true,
+    overrideConfig: [
+      {
+        files: ["**/*.{js,jsx,ts,tsx,mts,cts,mjs,cjs}"],
+        plugins: {
+          colocate: plugin,
+        },
+        rules,
+        languageOptions,
+      },
+    ],
+  });
+}
+
+function collectRuleMessages(
+  cwd: string,
+  results: ESLint.LintResult[],
+  ruleName: RuleName,
+): FixtureMessage[] {
+  const messages: FixtureMessage[] = [];
+  const fatal: string[] = [];
+  const ruleId = `colocate/${ruleName}`;
+
+  for (const result of results) {
+    for (const message of result.messages) {
+      if (message.fatal === true) {
+        fatal.push(
+          `${path.relative(cwd, result.filePath)}:${message.line} ${message.message}`,
+        );
+        continue;
+      }
+      if (message.ruleId === ruleId && message.messageId) {
+        messages.push({
+          file: path.relative(cwd, result.filePath),
+          messageId: message.messageId,
+          line: message.line,
+          message: message.message,
+        });
+      }
+    }
+  }
+
+  if (fatal.length > 0) {
+    throw new Error(`fixture produced parse errors:\n${fatal.join("\n")}`);
+  }
+
+  return messages;
+}
+
+function collectMessages(
+  cwd: string,
+  results: ESLint.LintResult[],
+): { file: string; messageId: string }[] {
+  return collectRuleMessages(cwd, results, "ownership").map(
+    ({ file, messageId }) => ({ file, messageId }),
+  );
+}
 
 const created: string[] = [];
 

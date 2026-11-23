@@ -1,8 +1,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ESLint } from "eslint";
-import tsParser from "@typescript-eslint/parser";
-import plugin from "../../src/index.js";
+import { safeReadFile } from "../../src/lib/fs-safe.js";
+import { formatMessage } from "../../src/messages.js";
+import { validateOptions } from "../../src/options.js";
+import { openProject } from "../../src/project.js";
 
 const fixturesDir = path.join(
   fileURLToPath(new URL(".", import.meta.url)),
@@ -14,117 +15,27 @@ export type RuleName = "ownership" | "entry";
 export interface FixtureMessage {
   file: string;
   messageId: string;
-  line: number;
+  line?: number;
   message: string;
 }
 
-export function makeESLint(
-  cwd: string,
-  ruleOptions?: Record<string, unknown>,
-  options?: {
-    parser?: "typescript" | "espree";
-    rule?: RuleName | RuleName[];
-  },
-): ESLint {
-  const languageOptions =
-    options?.parser === "espree"
-      ? {
-          sourceType: "module" as const,
-          ecmaVersion: 2022 as const,
-        }
-      : {
-          parser: tsParser,
-          parserOptions: {
-            sourceType: "module",
-            ecmaVersion: 2022,
-          },
-        };
-  const ruleNames =
-    options?.rule === undefined
-      ? (["ownership"] as const)
-      : Array.isArray(options.rule)
-        ? options.rule
-        : [options.rule];
-
-  const rules: Record<string, [string, Record<string, unknown>]> = {};
-  for (const ruleName of ruleNames) {
-    rules[`colocate/${ruleName}`] = ["error", ruleOptions ?? {}];
-  }
-
-  return new ESLint({
-    cwd,
-    overrideConfigFile: true,
-    overrideConfig: [
-      {
-        files: ["**/*.{js,jsx,ts,tsx,mts,cts,mjs,cjs}"],
-        plugins: {
-          colocate: plugin,
-        },
-        rules,
-        languageOptions,
-      },
-    ],
-  });
-}
-
-export function collectRuleMessages(
-  cwd: string,
-  results: ESLint.LintResult[],
-  ruleName: RuleName,
-): FixtureMessage[] {
-  const messages: FixtureMessage[] = [];
-  const fatal: string[] = [];
-  const ruleId = `colocate/${ruleName}`;
-
-  for (const result of results) {
-    for (const message of result.messages) {
-      if (message.fatal === true) {
-        fatal.push(
-          `${path.relative(cwd, result.filePath)}:${message.line} ${message.message}`,
-        );
-        continue;
-      }
-      if (message.ruleId === ruleId && message.messageId) {
-        messages.push({
-          file: path.relative(cwd, result.filePath),
-          messageId: message.messageId,
-          line: message.line,
-          message: message.message,
-        });
-      }
+function lineAt(content: string, offset: number): number {
+  let line = 1;
+  for (let i = 0; i < offset && i < content.length; i++) {
+    if (content[i] === "\n") {
+      line++;
     }
   }
-
-  if (fatal.length > 0) {
-    throw new Error(`fixture produced parse errors:\n${fatal.join("\n")}`);
-  }
-
-  return messages;
+  return line;
 }
 
-export function collectMessages(
-  cwd: string,
-  results: ESLint.LintResult[],
-): { file: string; messageId: string }[] {
-  return collectRuleMessages(cwd, results, "ownership").map(
-    ({ file, messageId }) => ({ file, messageId }),
+function isTargeted(relative: string, targets: string[]): boolean {
+  return targets.some(
+    (target) =>
+      target === "." ||
+      relative === target ||
+      relative.startsWith(`${target}/`),
   );
-}
-
-export async function lintFixture(
-  name: string,
-  ruleOptions?: Record<string, unknown>,
-  targets: string[] = ["src"],
-  options?: { parser?: "typescript" | "espree" },
-): Promise<{ file: string; messageId: string }[]> {
-  const messages = await lintFixtureRule(
-    name,
-    "ownership",
-    ruleOptions,
-    targets,
-    options,
-  );
-  return messages.map(({ file, messageId }) => ({ file, messageId }));
 }
 
 export async function lintFixtureRule(
@@ -132,23 +43,62 @@ export async function lintFixtureRule(
   rule: RuleName,
   ruleOptions?: Record<string, unknown>,
   targets: string[] = ["src"],
-  options?: { parser?: "typescript" | "espree" },
 ): Promise<FixtureMessage[]> {
-  const cwd = path.join(fixturesDir, name);
-  const results = await makeESLint(cwd, ruleOptions, {
-    ...options,
-    rule,
-  }).lintFiles(targets);
-  return collectRuleMessages(cwd, results, rule);
+  const cwd = path.resolve(fixturesDir, name);
+  const project = await openProject(
+    validateOptions({ ...ruleOptions, rules: [rule] }),
+    cwd,
+  );
+  const messages: FixtureMessage[] = [];
+  for (const file of project.files()) {
+    const relative = path.relative(cwd, file).split(path.sep).join("/");
+    if (!isTargeted(relative, targets)) {
+      continue;
+    }
+    const content = safeReadFile(file) ?? "";
+    for (const finding of project.findings(file)) {
+      const message: FixtureMessage = {
+        file: relative,
+        messageId: finding.kind,
+        message: formatMessage(finding),
+      };
+      if (finding.range !== undefined) {
+        message.line = lineAt(content, finding.range[0]);
+      }
+      messages.push(message);
+    }
+  }
+  return messages
+    .map((message, index) => ({ message, index }))
+    .sort(
+      (a, b) =>
+        a.message.file.localeCompare(b.message.file) ||
+        (a.message.line ?? 0) - (b.message.line ?? 0) ||
+        a.index - b.index,
+    )
+    .map(({ message }) => message);
+}
+
+export async function lintFixture(
+  name: string,
+  ruleOptions?: Record<string, unknown>,
+  targets: string[] = ["src"],
+): Promise<{ file: string; messageId: string }[]> {
+  const messages = await lintFixtureRule(
+    name,
+    "ownership",
+    ruleOptions,
+    targets,
+  );
+  return messages.map(({ file, messageId }) => ({ file, messageId }));
 }
 
 export async function lintEntryFixture(
   name: string,
   ruleOptions?: Record<string, unknown>,
   targets: string[] = ["src"],
-  options?: { parser?: "typescript" | "espree" },
 ): Promise<FixtureMessage[]> {
-  return lintFixtureRule(name, "entry", ruleOptions, targets, options);
+  return lintFixtureRule(name, "entry", ruleOptions, targets);
 }
 
 export function pick<K extends keyof FixtureMessage>(

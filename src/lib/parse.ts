@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { scopeBindsRequire } from "./require-binding.js";
+import { scopeRequireBinding } from "./require-binding.js";
 
 function scriptKindFromFileName(fileName: string): ts.ScriptKind {
   if (fileName.endsWith(".tsx")) {
@@ -84,8 +84,9 @@ export function extractImports(
   const sourceFile = parseSourceFile(fileName, content);
   const imports: { specifier: string; start: number; end: number }[] = [];
 
-  const visit = (node: ts.Node, shadowed: boolean): void => {
-    const requireIsCjs = !(shadowed || scopeBindsRequire(node));
+  const visit = (node: ts.Node, inherited: boolean): void => {
+    const binding = scopeRequireBinding(node);
+    const requireIsCjs = binding === undefined ? inherited : binding === "cjs";
     const literal = importedLiteral(node, requireIsCjs);
     if (literal !== undefined) {
       imports.push({
@@ -94,10 +95,10 @@ export function extractImports(
         end: literal.getEnd(),
       });
     }
-    ts.forEachChild(node, (child) => visit(child, !requireIsCjs));
+    ts.forEachChild(node, (child) => visit(child, requireIsCjs));
   };
 
-  visit(sourceFile, false);
+  visit(sourceFile, true);
   return imports;
 }
 

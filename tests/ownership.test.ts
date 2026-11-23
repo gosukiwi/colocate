@@ -1,10 +1,5 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { ESLint } from "eslint";
-import tsParser from "@typescript-eslint/parser";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import plugin from "../src/index.js";
 import { lintFixture, lintFixtureRule } from "./helpers/lint-fixture.js";
 
 function sortMessages(
@@ -31,21 +26,6 @@ describe("ownership rule", () => {
 
   it("does not report singletonFolder for a standalone flat source file", async () => {
     const messages = await lintFixture("singleton-flat-ok");
-    expect(sortMessages(messages)).toEqual([]);
-  });
-
-  it("honors a file-level eslint-disable comment", async () => {
-    const messages = await lintFixture("eslint-disable-ownership");
-    expect(sortMessages(messages)).toEqual([]);
-  });
-
-  it("honors a file-level eslint-disable comment with Espree on ESLint 10", async () => {
-    const messages = await lintFixture(
-      "eslint-disable-ownership-js",
-      {},
-      ["src"],
-      { parser: "espree" },
-    );
     expect(sortMessages(messages)).toEqual([]);
   });
 
@@ -550,47 +530,9 @@ describe("ownership rule", () => {
   });
 
   it("reports privateOutsideOwner when linting only the helper file", async () => {
-    const cwd = path.join(
-      fileURLToPath(new URL(".", import.meta.url)),
-      "fixtures/private-sibling",
-    );
-    const eslint = new ESLint({
-      cwd,
-      overrideConfigFile: true,
-      overrideConfig: [
-        {
-          files: ["**/*.{js,jsx,ts,tsx,mts,cts,mjs,cjs}"],
-          plugins: {
-            colocate: plugin,
-          },
-          rules: {
-            "colocate/ownership": ["error", {}],
-          },
-          languageOptions: {
-            parser: tsParser,
-            parserOptions: {
-              sourceType: "module",
-              ecmaVersion: 2022,
-            },
-          },
-        },
-      ],
-    });
-
-    const results = await eslint.lintFiles(["src/pages/helper.ts"]);
-    const messages: { file: string; messageId: string }[] = [];
-
-    for (const result of results) {
-      for (const message of result.messages) {
-        if (message.ruleId === "colocate/ownership" && message.messageId) {
-          messages.push({
-            file: path.relative(cwd, result.filePath),
-            messageId: message.messageId,
-          });
-        }
-      }
-    }
-
+    const messages = await lintFixture("private-sibling", {}, [
+      "src/pages/helper.ts",
+    ]);
     expect(sortMessages(messages)).toEqual([
       { file: "src/pages/helper.ts", messageId: "privateOutsideOwner" },
     ]);

@@ -78,6 +78,35 @@ export function scopeBindsRequire(node: ts.Node): boolean {
   return statements.some(statementBindsRequire);
 }
 
+function scopeStatements(node: ts.Node): readonly ts.Statement[] | undefined {
+  return ts.isSourceFile(node) || ts.isBlock(node) || ts.isModuleBlock(node)
+    ? node.statements
+    : undefined;
+}
+
+function declaresCreateRequire(statement: ts.Statement): boolean {
+  return (
+    ts.isVariableStatement(statement) &&
+    statement.declarationList.declarations.some(
+      (d) =>
+        ts.isIdentifier(d.name) &&
+        d.name.text === REQUIRE &&
+        tsIsCreateRequireCall(d.initializer),
+    )
+  );
+}
+
+export function scopeRequireBinding(
+  node: ts.Node,
+): "cjs" | "shadowed" | undefined {
+  if (scopeBindsRequire(node)) {
+    return "shadowed";
+  }
+  return scopeStatements(node)?.some(declaresCreateRequire) === true
+    ? "cjs"
+    : undefined;
+}
+
 export function requireIsShadowed(
   sourceCode: SourceCode,
   node: ESTree.Node,
