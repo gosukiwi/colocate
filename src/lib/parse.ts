@@ -40,18 +40,27 @@ export function stringLiteralText(
   return undefined;
 }
 
-function importedSpecifier(
+function literalNode(
+  node: ts.Node | undefined,
+): ts.StringLiteralLike | undefined {
+  if (node !== undefined && ts.isStringLiteralLike(node)) {
+    return node;
+  }
+  return undefined;
+}
+
+function importedLiteral(
   node: ts.Node,
   requireIsCjs: boolean,
-): string | undefined {
+): ts.StringLiteralLike | undefined {
   if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
-    return stringLiteralText(node.moduleSpecifier);
+    return literalNode(node.moduleSpecifier);
   }
   if (
     ts.isImportEqualsDeclaration(node) &&
     ts.isExternalModuleReference(node.moduleReference)
   ) {
-    return stringLiteralText(node.moduleReference.expression);
+    return literalNode(node.moduleReference.expression);
   }
   if (
     ts.isCallExpression(node) &&
@@ -60,27 +69,38 @@ function importedSpecifier(
         ts.isIdentifier(node.expression) &&
         node.expression.text === "require"))
   ) {
-    return stringLiteralText(node.arguments[0]);
+    return literalNode(node.arguments[0]);
   }
   if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) {
-    return stringLiteralText(node.argument.literal);
+    return literalNode(node.argument.literal);
   }
   return undefined;
 }
 
-export function extractSpecifiers(content: string, fileName: string): string[] {
+export function extractImports(
+  content: string,
+  fileName: string,
+): { specifier: string; start: number; end: number }[] {
   const sourceFile = parseSourceFile(fileName, content);
-  const specifiers: string[] = [];
+  const imports: { specifier: string; start: number; end: number }[] = [];
 
   const visit = (node: ts.Node, shadowed: boolean): void => {
     const requireIsCjs = !(shadowed || scopeBindsRequire(node));
-    const specifier = importedSpecifier(node, requireIsCjs);
-    if (specifier !== undefined) {
-      specifiers.push(specifier);
+    const literal = importedLiteral(node, requireIsCjs);
+    if (literal !== undefined) {
+      imports.push({
+        specifier: literal.text,
+        start: literal.getStart(sourceFile),
+        end: literal.getEnd(),
+      });
     }
     ts.forEachChild(node, (child) => visit(child, !requireIsCjs));
   };
 
   visit(sourceFile, false);
-  return specifiers;
+  return imports;
+}
+
+export function extractSpecifiers(content: string, fileName: string): string[] {
+  return extractImports(content, fileName).map((i) => i.specifier);
 }

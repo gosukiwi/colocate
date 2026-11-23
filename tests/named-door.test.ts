@@ -44,7 +44,7 @@ describe("namedDoorReexports", () => {
     const buffer = 'export { x } from "./sib";\n';
 
     expect(namedDoorReexports(fooPath, graph, buffer)).toEqual([
-      { target: sibPath, pos: 0 },
+      { target: sibPath, pos: 0, end: buffer.indexOf("\n") },
     ]);
     expect(namedDoorReexports(fooPath, graph)).toEqual([]);
   });

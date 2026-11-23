@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractSpecifiers } from "../src/lib/parse.js";
+import { extractImports, extractSpecifiers } from "../src/lib/parse.js";
 
 describe("extractSpecifiers", () => {
   it("records type-position import()", () => {
@@ -59,5 +59,36 @@ describe("extractSpecifiers", () => {
 
   it("ignores a template specifier with substitutions", () => {
     expect(extractSpecifiers("import(`./mod${y}`);\n", "a.ts")).toEqual([]);
+  });
+});
+
+describe("extractImports", () => {
+  const cases: [string, string, string][] = [
+    ["import declaration", 'import a from "./x";\n', "a.ts"],
+    ["export-from", 'export * from "./x";\n', "a.ts"],
+    ["dynamic import()", 'const m = import("./x");\n', "a.ts"],
+    ["require() call", 'const m = require("./x");\n', "a.js"],
+    ["import-equals require", 'import m = require("./x");\n', "a.ts"],
+    ["import type node", 'let v: import("./x").T;\n', "a.ts"],
+  ];
+
+  it.each(cases)("locates the literal for %s", (_name, content, fileName) => {
+    const start = content.indexOf('"./x"');
+    expect(extractImports(content, fileName)).toEqual([
+      { specifier: "./x", start, end: start + '"./x"'.length },
+    ]);
+  });
+
+  it("matches extractSpecifiers order and skips shadowed require", () => {
+    const content =
+      'import "./a";\nfunction f(require) { require("./b"); }\nrequire("./c");\n';
+    const imports = extractImports(content, "a.js");
+    expect(imports.map((i) => i.specifier)).toEqual(
+      extractSpecifiers(content, "a.js"),
+    );
+    expect(imports.map((i) => content.slice(i.start, i.end))).toEqual([
+      '"./a"',
+      '"./c"',
+    ]);
   });
 });

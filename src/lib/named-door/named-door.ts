@@ -128,7 +128,7 @@ function originFromBindingName(
 interface DoorScan {
   resolve: (specifier: string) => string | undefined;
   origins: Map<string, string>;
-  results: { target: string; pos: number }[];
+  results: { target: string; pos: number; end: number }[];
   sourceFile: ts.SourceFile;
   requireIsCjs: boolean;
 }
@@ -268,7 +268,11 @@ function collectOrigins(node: ts.Node, scan: DoorScan): void {
 }
 
 function pushExportTarget(scan: DoorScan, node: ts.Node, target: string): void {
-  scan.results.push({ target, pos: node.getStart(scan.sourceFile) });
+  scan.results.push({
+    target,
+    pos: node.getStart(scan.sourceFile),
+    end: node.getEnd(),
+  });
 }
 
 function firstValueNamedExportTarget(
@@ -428,7 +432,7 @@ export function namedDoorReexports(
   filePath: string,
   graph: Graph,
   content?: string,
-): readonly { target: string; pos: number }[] {
+): readonly { target: string; pos: number; end: number }[] {
   if (!isNamedDoor(filePath)) {
     return [];
   }
@@ -439,7 +443,7 @@ export function namedDoorReexports(
   const sourceFile = parseSourceFile(filePath, source);
   const settings = getGraphResolutionSettings(graph);
   const fromDir = path.dirname(filePath);
-  const results: { target: string; pos: number }[] = [];
+  const results: { target: string; pos: number; end: number }[] = [];
   const origins = new Map<string, string>();
 
   const resolveInGraph = (specifier: string): string | undefined => {
