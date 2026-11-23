@@ -96,3 +96,34 @@ export function resolveSubject(context: Rule.RuleContext): Subject | undefined {
       path.relative(realRootDir, filePath).split(path.sep).join("/"),
   };
 }
+
+export function subjectFor(
+  file: string,
+  root: { rootDir: string; realRootDir: string },
+  ignore: string[],
+  graph: Graph,
+): Subject | undefined {
+  if (!isSourceFile(file)) {
+    return undefined;
+  }
+  const realFile = safeRealpath(file);
+  if (realFile === undefined) {
+    return undefined;
+  }
+  const { rootDir, realRootDir } = root;
+  if (!isInGraphScope(path.relative(realRootDir, realFile), ignore)) {
+    return undefined;
+  }
+  return {
+    rootDir,
+    realRootDir,
+    file: realFile,
+    ignore,
+    graph: () => graph,
+    covers: (filePath) =>
+      isSourceFile(filePath) &&
+      isInGraphScope(path.relative(realRootDir, filePath), ignore),
+    display: (filePath) =>
+      path.relative(realRootDir, filePath).split(path.sep).join("/"),
+  };
+}

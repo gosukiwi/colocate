@@ -25,4 +25,9 @@ export {
   type OwnershipContext,
 } from "./owners.js";
 export { resolveRootDir } from "./root.js";
-export { resolveSubject, resolvedLintRoot, type Subject } from "./subject.js";
+export {
+  resolveSubject,
+  resolvedLintRoot,
+  subjectFor,
+  type Subject,
+} from "./subject.js";

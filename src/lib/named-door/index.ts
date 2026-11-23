@@ -1,3 +1,4 @@
+export { crossedGate, type Crossing } from "./crossing.js";
 export {
   findCrossedGate,
   getGates,

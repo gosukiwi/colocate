@@ -1,19 +1,12 @@
-import path from "node:path";
 import type { Rule } from "eslint";
 import type * as ESTree from "estree";
 import {
-  findCrossedGate,
+  crossedGate,
   isNamedDoor,
   namedDoorReexports,
-  type CrossedGate,
 } from "../lib/named-door/index.js";
-import {
-  canonicalGraphPath,
-  getGraphResolutionSettings,
-} from "../lib/graph.js";
 import { requireIsShadowed } from "../lib/require-binding.js";
-import { resolveSpecifier } from "../lib/resolve.js";
-import { resolveSubject, type Subject } from "../lib/findings/index.js";
+import { resolveSubject } from "../lib/findings/index.js";
 
 function staticSpecifier(source: ESTree.Node): string | undefined {
   if (source.type === "Literal") {
@@ -27,36 +20,6 @@ function staticSpecifier(source: ESTree.Node): string | undefined {
     return source.quasis[0]?.value.cooked ?? undefined;
   }
   return undefined;
-}
-
-interface Crossing extends CrossedGate {
-  target: string;
-}
-
-function crossedGate(
-  specifier: string,
-  subject: Subject,
-): Crossing | undefined {
-  const graph = subject.graph();
-  const resolved = resolveSpecifier(
-    specifier,
-    path.dirname(subject.file),
-    getGraphResolutionSettings(graph),
-  );
-  if (resolved === undefined) {
-    return undefined;
-  }
-  const target = canonicalGraphPath(graph, resolved);
-  if (!subject.covers(target)) {
-    return undefined;
-  }
-  const crossed = findCrossedGate(
-    target,
-    canonicalGraphPath(graph, subject.file),
-    graph,
-    subject.realRootDir,
-  );
-  return crossed === undefined ? undefined : { ...crossed, target };
 }
 
 interface TypeImportNode {
