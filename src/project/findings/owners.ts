@@ -10,7 +10,7 @@ import {
   type Graph,
 } from "../../lib/graph.js";
 import { parseSourceFile } from "../../lib/parse.js";
-import { isInsideDir } from "../../lib/paths.js";
+import { isAtOrInsideDir, isInsideDir } from "../../lib/paths.js";
 import { resolveSpecifier } from "../../lib/resolve.js";
 import { SKIP_DIRS } from "../../lib/scope.js";
 
@@ -88,11 +88,7 @@ function isNamespaceBarrel(filePath: string, graph: Graph): boolean {
   return collectReExports(filePath, path.dirname(filePath), graph).length >= 2;
 }
 
-export function isOwnerEntryFile(
-  file: string,
-  dir: string,
-  graph: Graph,
-): boolean {
+function isOwnerEntryFile(file: string, dir: string, graph: Graph): boolean {
   if (path.dirname(file) !== dir) {
     return false;
   }
@@ -460,6 +456,32 @@ function collectConsumerOwners(
 
 function ownerDir(owner: Owner): string {
   return owner.kind === "folder" ? owner.path : path.dirname(owner.path);
+}
+
+export function ownerHome(owner: Owner): string {
+  if (owner.kind === "folder") {
+    return owner.path;
+  }
+  const stem = path.basename(owner.path, path.extname(owner.path));
+  return path.join(path.dirname(owner.path), stem);
+}
+
+export interface Moved {
+  path: string;
+  isDir: boolean;
+}
+
+export function movedWithStandaloneOwner(
+  file: string,
+  owner: Owner,
+  graph: Graph,
+): Moved | undefined {
+  const isDir = isOwnerEntryFile(file, path.dirname(file), graph);
+  const movedPath = isDir ? path.dirname(file) : file;
+  if (isAtOrInsideDir(movedPath, ownerHome(owner))) {
+    return undefined;
+  }
+  return { path: movedPath, isDir };
 }
 
 function isOutsideOwner(filePath: string, owner: Owner): boolean {

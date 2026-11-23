@@ -2,6 +2,7 @@ export {
   openProject,
   type Finding,
   type FindingKind,
+  type MessageId,
   type Project,
 } from "./project/project.js";
 export { validateOptions, type Options, type RuleName } from "./options.js";

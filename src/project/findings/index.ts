@@ -16,6 +16,7 @@ export {
   privateOutsideOwner,
   resolveLayerDirectories,
   shouldSkipColocation,
+  type Moved,
   type Owner,
   type SharedIssue,
   type OwnershipContext,

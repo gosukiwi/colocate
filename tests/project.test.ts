@@ -25,6 +25,7 @@ describe("openProject", () => {
       {
         rule: "ownership",
         kind: "singletonFolder",
+        messageId: "singletonFolder",
         file,
         data: { destination: "src/" },
       },
@@ -97,106 +98,86 @@ describe("openProject", () => {
     );
   });
 
-  it("asks to group a helper with its standalone owner into the owner's folder", () => {
-    const { cwd, project } = open("private-standalone-owner", { root: "src" });
-    const found = project.findings(path.join(cwd, "src/pages/helper.ts"));
-    expect(found).toHaveLength(1);
-    expect(found[0]?.kind).toBe("privateOutsideOwner");
-    expect(found[0]?.data).toEqual({
-      destination: "src/pages/MyPage/",
-      owner: "src/pages/MyPage.ts",
-      moving: "src/pages/helper.ts",
-    });
-    expect(formatMessage(found[0]!)).toBe(
-      "File is imported only by the standalone file 'src/pages/MyPage.ts'; move 'src/pages/helper.ts' and 'src/pages/MyPage.ts' into the folder 'src/pages/MyPage/' so the owner becomes its entry.",
-    );
-  });
-
-  it("asks to move the whole folder when the flagged file is its folder's entry", () => {
-    const { cwd, project } = open("standalone-owner-folder-entry", {
-      root: "src",
-    });
-    const found = project.findings(path.join(cwd, "src/MyPage/MyPage.ts"));
-    expect(found).toHaveLength(1);
-    expect(found[0]?.data).toEqual({
-      destination: "src/x/",
-      owner: "src/x.ts",
-      moving: "src/MyPage/",
-    });
-    expect(formatMessage(found[0]!)).toBe(
-      "File is imported only by the standalone file 'src/x.ts'; move 'src/MyPage/' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
-    );
-  });
-
-  it("moves only the file when it is a sibling of its folder's entry", () => {
-    const { cwd, project } = open("standalone-owner-sibling-of-entry", {
-      root: "src",
-    });
-    const found = project.findings(path.join(cwd, "src/MyPage/util.ts"));
-    expect(found).toHaveLength(1);
-    expect(found[0]?.data).toEqual({
-      destination: "src/x/",
-      owner: "src/x.ts",
-      moving: "src/MyPage/util.ts",
-    });
-    expect(formatMessage(found[0]!)).toBe(
-      "File is imported only by the standalone file 'src/x.ts'; move 'src/MyPage/util.ts' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
-    );
-  });
-
-  it("moves only the file when its folder owner is an ancestor", () => {
-    const { cwd, project } = open("standalone-owner-ancestor-folder", {
-      root: "src",
-    });
-    const found = project
-      .findings(path.join(cwd, "src/Feat/lib/deep.ts"))
-      .filter((f) => f.kind === "privateOutsideOwner");
-    expect(found).toHaveLength(1);
-    expect(found[0]?.data).toEqual({
-      destination: "src/x/",
-      owner: "src/x.ts",
-      moving: "src/Feat/lib/deep.ts",
-    });
-    expect(formatMessage(found[0]!)).toBe(
-      "File is imported only by the standalone file 'src/x.ts'; move 'src/Feat/lib/deep.ts' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
-    );
-  });
-
-  it("moves only the owner when the folder already is the destination", () => {
-    const { cwd, project } = open("standalone-owner-same-name-folder", {
-      root: "src",
-    });
-    const found = project
-      .findings(path.join(cwd, "src/x/index.ts"))
-      .filter((f) => f.kind === "privateOutsideOwner");
-    expect(found).toHaveLength(1);
-    expect(found[0]?.data).toEqual({
-      destination: "src/x/",
-      owner: "src/x.ts",
-    });
-    expect(formatMessage(found[0]!)).toBe(
-      "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
-    );
-  });
-
   it.each([
-    ["standalone-owner-helper-in-owner-folder", "src/x/helper.ts"],
-    ["standalone-owner-entry-in-owner-folder", "src/x/MyPage/MyPage.ts"],
+    {
+      fixture: "private-standalone-owner",
+      flagged: "src/pages/helper.ts",
+      messageId: "privateOutsideStandaloneOwner",
+      data: {
+        destination: "src/pages/MyPage/",
+        owner: "src/pages/MyPage.ts",
+        moving: "src/pages/helper.ts",
+      },
+      message:
+        "File is imported only by the standalone file 'src/pages/MyPage.ts'; move 'src/pages/helper.ts' and 'src/pages/MyPage.ts' into the folder 'src/pages/MyPage/' so the owner becomes its entry.",
+    },
+    {
+      fixture: "standalone-owner-folder-entry",
+      flagged: "src/MyPage/MyPage.ts",
+      messageId: "privateOutsideStandaloneOwner",
+      data: { destination: "src/x/", owner: "src/x.ts", moving: "src/MyPage/" },
+      message:
+        "File is imported only by the standalone file 'src/x.ts'; move 'src/MyPage/' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
+    },
+    {
+      fixture: "standalone-owner-sibling-of-entry",
+      flagged: "src/MyPage/util.ts",
+      messageId: "privateOutsideStandaloneOwner",
+      data: {
+        destination: "src/x/",
+        owner: "src/x.ts",
+        moving: "src/MyPage/util.ts",
+      },
+      message:
+        "File is imported only by the standalone file 'src/x.ts'; move 'src/MyPage/util.ts' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
+    },
+    {
+      fixture: "standalone-owner-ancestor-folder",
+      flagged: "src/Feat/lib/deep.ts",
+      messageId: "privateOutsideStandaloneOwner",
+      data: {
+        destination: "src/x/",
+        owner: "src/x.ts",
+        moving: "src/Feat/lib/deep.ts",
+      },
+      message:
+        "File is imported only by the standalone file 'src/x.ts'; move 'src/Feat/lib/deep.ts' and 'src/x.ts' into the folder 'src/x/' so the owner becomes its entry.",
+    },
+    {
+      fixture: "standalone-owner-same-name-folder",
+      flagged: "src/x/index.ts",
+      messageId: "privateOutsideStandaloneOwnerOnly",
+      data: { destination: "src/x/", owner: "src/x.ts" },
+      message:
+        "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
+    },
+    {
+      fixture: "standalone-owner-helper-in-owner-folder",
+      flagged: "src/x/helper.ts",
+      messageId: "privateOutsideStandaloneOwnerOnly",
+      data: { destination: "src/x/", owner: "src/x.ts" },
+      message:
+        "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
+    },
+    {
+      fixture: "standalone-owner-entry-in-owner-folder",
+      flagged: "src/x/MyPage/MyPage.ts",
+      messageId: "privateOutsideStandaloneOwnerOnly",
+      data: { destination: "src/x/", owner: "src/x.ts" },
+      message:
+        "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
+    },
   ])(
-    "moves only the owner when the flagged file is already inside the destination (%s)",
-    (fixture, flagged) => {
+    "explains the standalone-owner move for $fixture",
+    ({ fixture, flagged, messageId, data, message }) => {
       const { cwd, project } = open(fixture, { root: "src" });
       const found = project
         .findings(path.join(cwd, flagged))
         .filter((f) => f.kind === "privateOutsideOwner");
       expect(found).toHaveLength(1);
-      expect(found[0]?.data).toEqual({
-        destination: "src/x/",
-        owner: "src/x.ts",
-      });
-      expect(formatMessage(found[0]!)).toBe(
-        "File is imported only by the standalone file 'src/x.ts' beside its folder; move 'src/x.ts' into 'src/x/' so it becomes the folder's entry.",
-      );
+      expect(found[0]?.messageId).toBe(messageId);
+      expect(found[0]?.data).toEqual(data);
+      expect(formatMessage(found[0]!)).toBe(message);
     },
   );
 
