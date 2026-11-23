@@ -2,7 +2,11 @@ import path from "node:path";
 import ts from "typescript";
 import { derivedFromGraph } from "./derived.js";
 import { safeReadFile, safeRealpath } from "./fs-safe.js";
-import { extractSpecifiers } from "./parse.js";
+import {
+  parsedFilesOf,
+  parseForStore,
+  type ParsedFile,
+} from "./parsed-files.js";
 import {
   createResolutionSettings,
   resolveSpecifier,
@@ -98,6 +102,7 @@ export const getGraphResolutionSettings = derivedFromGraph(() =>
 export function buildGraphFromFiles(
   files: readonly string[],
   resolvedRoot: string,
+  retainSource: (file: string) => boolean = () => false,
 ): Graph {
   const fileSet = new Set(files);
   const filesByFoldedPath = new Map(
@@ -105,6 +110,7 @@ export function buildGraphFromFiles(
   );
   const importers = new Map<string, string[]>();
   const settings = createResolutionSettings(resolvedRoot);
+  const store = new Map<string, ParsedFile>();
 
   for (const file of files) {
     const realFile = safeRealpath(file);
@@ -116,8 +122,10 @@ export function buildGraphFromFiles(
       continue;
     }
     const fromDir = path.dirname(file);
+    const parsed = parseForStore(file, content, retainSource);
+    store.set(file, parsed);
 
-    for (const specifier of extractSpecifiers(content, file)) {
+    for (const { specifier } of parsed.imports) {
       const resolved = resolveSpecifier(specifier, fromDir, settings);
       if (resolved === undefined) {
         continue;
@@ -141,14 +149,19 @@ export function buildGraphFromFiles(
   graphFileSet.prime(graph, fileSet);
   graphFilesByFoldedPath.prime(graph, filesByFoldedPath);
   graphFilesByDir.prime(graph, filesByParentDir(files));
+  parsedFilesOf.prime(graph, store);
   return graph;
 }
 
-export function buildGraph(rootDir: string, ignoreGlobs: string[]): Graph {
+export function buildGraph(
+  rootDir: string,
+  ignoreGlobs: string[],
+  retainSource?: (file: string) => boolean,
+): Graph {
   const resolvedRoot = safeRealpath(rootDir);
   if (resolvedRoot === undefined) {
     return { importers: new Map(), files: [] };
   }
   const { files } = collectSourceFiles(resolvedRoot, ignoreGlobs);
-  return buildGraphFromFiles(files, resolvedRoot);
+  return buildGraphFromFiles(files, resolvedRoot, retainSource);
 }

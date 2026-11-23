@@ -11,7 +11,7 @@ import {
 import { buildGraphFromFiles, type Graph } from "../lib/graph.js";
 import { crossedGate } from "./crossing.js";
 import { isNamedDoor, namedDoorReexports } from "./named-door.js";
-import { extractImports } from "../lib/parse.js";
+import { parsedImports } from "../lib/parsed-files.js";
 import { collectSourceFiles } from "../lib/walk.js";
 import type { Options, RuleName } from "../options.js";
 
@@ -100,14 +100,12 @@ function ownershipFindingsFor(
 
 function crossingFindings(
   subject: Subject,
-  content: string,
+  graph: Graph,
   display: (filePath: string) => string,
 ): Finding[] {
   const findings: Finding[] = [];
-  for (const { specifier, start, end } of extractImports(
-    content,
-    subject.file,
-  )) {
+  for (const { specifier, start, end } of parsedImports(graph, subject.file) ??
+    []) {
     const c = crossedGate(specifier, subject);
     if (c !== undefined) {
       findings.push({
@@ -161,7 +159,7 @@ function entryFindingsFor(
     return [];
   }
   return [
-    ...crossingFindings(subject, content, display),
+    ...crossingFindings(subject, graph, display),
     ...reexportFindings(subject, graph, content, display),
   ].sort((a, b) => (a.range?.[0] ?? 0) - (b.range?.[0] ?? 0));
 }

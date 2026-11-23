@@ -77,12 +77,12 @@ function importedLiteral(
   return undefined;
 }
 
-export function extractImports(
-  content: string,
-  fileName: string,
-): { specifier: string; start: number; end: number }[] {
-  const sourceFile = parseSourceFile(fileName, content);
-  const imports: { specifier: string; start: number; end: number }[] = [];
+export type ParsedImport = { specifier: string; start: number; end: number };
+
+export function importsFromSourceFile(
+  sourceFile: ts.SourceFile,
+): ParsedImport[] {
+  const imports: ParsedImport[] = [];
 
   const visit = (node: ts.Node, inherited: boolean): void => {
     const binding = scopeRequireBinding(node);
@@ -100,6 +100,13 @@ export function extractImports(
 
   visit(sourceFile, true);
   return imports;
+}
+
+export function extractImports(
+  content: string,
+  fileName: string,
+): ParsedImport[] {
+  return importsFromSourceFile(parseSourceFile(fileName, content));
 }
 
 export function extractSpecifiers(content: string, fileName: string): string[] {
