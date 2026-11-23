@@ -118,7 +118,7 @@ export function openProject(options: Options, cwd: string): Project {
   const graph = buildGraphFromFiles(
     collectSourceFiles(realRootDir, options.ignore).files,
     realRootDir,
-  ).graph;
+  );
   const subjectOf = (file: string): Subject | undefined =>
     subjectFor(file, root, options.ignore, graph);
 

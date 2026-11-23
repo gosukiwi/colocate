@@ -95,14 +95,10 @@ export const getGraphResolutionSettings = derivedFromGraph(() =>
   noProjectResolutionSettings(),
 );
 
-export function buildGraph(rootDir: string, ignoreGlobs: string[]): Graph {
-  return buildGraphWithConfigs(rootDir, ignoreGlobs).graph;
-}
-
 export function buildGraphFromFiles(
   files: readonly string[],
   resolvedRoot: string,
-): { graph: Graph; configPaths: string[] } {
+): Graph {
   const fileSet = new Set(files);
   const filesByFoldedPath = new Map(
     files.map((file) => [foldGraphPath(file), file]),
@@ -145,18 +141,14 @@ export function buildGraphFromFiles(
   graphFileSet.prime(graph, fileSet);
   graphFilesByFoldedPath.prime(graph, filesByFoldedPath);
   graphFilesByDir.prime(graph, filesByParentDir(files));
-  return { graph, configPaths: settings.configPaths };
+  return graph;
 }
 
-export function buildGraphWithConfigs(
-  rootDir: string,
-  ignoreGlobs: string[],
-): { graph: Graph; configPaths: string[] } {
+export function buildGraph(rootDir: string, ignoreGlobs: string[]): Graph {
   const resolvedRoot = safeRealpath(rootDir);
   if (resolvedRoot === undefined) {
-    return { graph: { importers: new Map(), files: [] }, configPaths: [] };
+    return { importers: new Map(), files: [] };
   }
   const { files } = collectSourceFiles(resolvedRoot, ignoreGlobs);
-  const { graph, configPaths } = buildGraphFromFiles(files, resolvedRoot);
-  return { graph, configPaths };
+  return buildGraphFromFiles(files, resolvedRoot);
 }

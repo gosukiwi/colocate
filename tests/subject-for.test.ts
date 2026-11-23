@@ -16,7 +16,7 @@ function setup(fixture: string, ignore: string[] = []) {
   const graph = buildGraphFromFiles(
     collectSourceFiles(rootDir, ignore).files,
     rootDir,
-  ).graph;
+  );
   return { root: { rootDir, realRootDir: rootDir }, graph, ignore };
 }
 

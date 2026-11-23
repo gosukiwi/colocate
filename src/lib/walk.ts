@@ -1,11 +1,6 @@
 import type { Dirent } from "node:fs";
 import path from "node:path";
-import {
-  classifyDirEntry,
-  safeReaddir,
-  safeRealpath,
-  safeStat,
-} from "./fs-safe.js";
+import { classifyDirEntry, safeReaddir, safeRealpath } from "./fs-safe.js";
 import { isAtOrInsideDir } from "./paths.js";
 import {
   isExcludedPath,
@@ -14,23 +9,6 @@ import {
   matchesIgnore,
   SKIP_DIRS,
 } from "./scope.js";
-
-interface DirStamp {
-  mtimeMs: number;
-  ctimeMs: number;
-  size: number;
-}
-
-function stampDir(dir: string, dirStamps: Map<string, DirStamp>): void {
-  const stat = safeStat(dir);
-  if (stat !== undefined) {
-    dirStamps.set(dir, {
-      mtimeMs: stat.mtimeMs,
-      ctimeMs: stat.ctimeMs,
-      size: stat.size,
-    });
-  }
-}
 
 function resolveWalkRealPath(
   fullPath: string,
@@ -58,7 +36,6 @@ interface WalkContext {
   rootDir: string;
   ignoreGlobs: string[];
   files: Set<string>;
-  dirStamps: Map<string, DirStamp>;
   linkedRealDirs: Set<string>;
   behindLink: boolean;
 }
@@ -81,7 +58,6 @@ function visitDirectory(
     ctx.rootDir,
     ctx.ignoreGlobs,
     ctx.files,
-    ctx.dirStamps,
     nested,
     ctx.linkedRealDirs,
     ctx.behindLink || isLink,
@@ -141,7 +117,6 @@ function walkDir(
   rootDir: string,
   ignoreGlobs: string[],
   files: Set<string>,
-  dirStamps: Map<string, DirStamp>,
   ancestorRealDirs: Set<string>,
   linkedRealDirs: Set<string>,
   behindLink: boolean,
@@ -150,13 +125,11 @@ function walkDir(
   if (realDir === undefined || ancestorRealDirs.has(realDir)) {
     return;
   }
-  stampDir(dir, dirStamps);
   const nested = new Set(ancestorRealDirs).add(realDir);
   const ctx: WalkContext = {
     rootDir,
     ignoreGlobs,
     files,
-    dirStamps,
     linkedRealDirs,
     behindLink,
   };
@@ -168,24 +141,16 @@ function walkDir(
 export function collectSourceFiles(
   resolvedRoot: string,
   ignoreGlobs: string[],
-): {
-  files: string[];
-  dirStamps: Map<string, DirStamp>;
-} {
+): { files: string[] } {
   const collected = new Set<string>();
-  const dirStamps = new Map<string, DirStamp>();
   walkDir(
     resolvedRoot,
     resolvedRoot,
     ignoreGlobs,
     collected,
-    dirStamps,
     new Set(),
     new Set(),
     false,
   );
-  return {
-    files: [...collected].sort(),
-    dirStamps,
-  };
+  return { files: [...collected].sort() };
 }
