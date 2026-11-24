@@ -6,6 +6,7 @@ import { isSourceFile, SOURCE_EXTS } from "./scope.js";
 export interface ResolutionSettings {
   options: ts.CompilerOptions;
   cache: ts.ModuleResolutionCache;
+  finalResolutions: Map<string, Map<string, string | undefined>>;
   configPaths: string[];
 }
 
@@ -61,6 +62,7 @@ export function createResolutionSettings(rootDir: string): ResolutionSettings {
       resolutionOptions,
     ),
     configPaths,
+    finalResolutions: new Map(),
   };
 }
 
@@ -186,6 +188,27 @@ function aliasCandidates(
 }
 
 export function resolveSpecifier(
+  specifier: string,
+  fromDir: string,
+  settings?: ResolutionSettings,
+): string | undefined {
+  if (settings === undefined) {
+    return resolveUncached(specifier, fromDir);
+  }
+  let bySpecifier = settings.finalResolutions.get(fromDir);
+  if (bySpecifier === undefined) {
+    bySpecifier = new Map();
+    settings.finalResolutions.set(fromDir, bySpecifier);
+  }
+  if (bySpecifier.has(specifier)) {
+    return bySpecifier.get(specifier);
+  }
+  const result = resolveUncached(specifier, fromDir, settings);
+  bySpecifier.set(specifier, result);
+  return result;
+}
+
+function resolveUncached(
   specifier: string,
   fromDir: string,
   settings?: ResolutionSettings,

@@ -93,6 +93,7 @@ function noProjectResolutionSettings(): ResolutionSettings {
       resolutionOptions,
     ),
     configPaths: [],
+    finalResolutions: new Map(),
   };
 }
 
