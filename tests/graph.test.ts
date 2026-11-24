@@ -16,6 +16,8 @@ import {
   resolveSpecifier,
 } from "../src/lib/resolve.js";
 import { isTestFile } from "../src/lib/scope.js";
+import { validateOptions } from "../src/options.js";
+import { openProject } from "../src/project/project.js";
 
 const created: string[] = [];
 
@@ -74,6 +76,52 @@ describe("isTestFile", () => {
 });
 
 describe("buildGraph resolution", () => {
+  it("reuses a successful final answer and distinguishes importer directories", () => {
+    const root = fs.realpathSync(tempDir("colocate-resolution-hit-"));
+    const first = path.join(root, "first");
+    const second = path.join(root, "second");
+    fs.mkdirSync(first);
+    fs.mkdirSync(second);
+    const firstTarget = path.join(first, "target.cts");
+    const secondTarget = path.join(second, "target.cts");
+    fs.writeFileSync(firstTarget, "");
+    fs.writeFileSync(secondTarget, "");
+    const settings = createResolutionSettings(root);
+    expect(resolveSpecifier("./target", first, settings)).toBe(firstTarget);
+    fs.unlinkSync(firstTarget);
+    expect(resolveSpecifier("./target", first, settings)).toBe(firstTarget);
+    expect(resolveSpecifier("./target", second, settings)).toBe(secondTarget);
+    expect(resolveSpecifier("./target", first)).toBeUndefined();
+  });
+
+  it("reuses a missing final answer for the same directory and specifier", () => {
+    const root = fs.realpathSync(tempDir("colocate-resolution-miss-"));
+    const settings = createResolutionSettings(root);
+    expect(resolveSpecifier("./late", root, settings)).toBeUndefined();
+    const target = path.join(root, "late.cts");
+    fs.writeFileSync(target, "");
+    expect(resolveSpecifier("./late", root, settings)).toBeUndefined();
+    expect(resolveSpecifier("./late", root)).toBe(target);
+  });
+
+  it("observes a newly created target in a new project", () => {
+    const root = fs.realpathSync(tempDir("colocate-resolution-run-"));
+    const src = path.join(root, "src");
+    const feature = path.join(src, "Feature");
+    fs.mkdirSync(feature, { recursive: true });
+    const importer = path.join(src, "app.ts");
+    fs.writeFileSync(importer, 'import "./Feature/helper";\n');
+    fs.writeFileSync(path.join(feature, "Feature.ts"), "export {};\n");
+    const options = validateOptions({ root: "src", rules: ["entry"] });
+    const first = openProject(options, root);
+    fs.writeFileSync(path.join(feature, "helper.cts"), "export {};\n");
+    expect(first.findings(importer)).toEqual([]);
+    const second = openProject(options, root);
+    expect(second.findings(importer).map((finding) => finding.kind)).toEqual([
+      "reachesPastEntry",
+    ]);
+  });
+
   it("resolves the longest matching path alias prefix", () => {
     const rootDir = fixture("alias-longest-prefix");
     const graph = buildGraph(rootDir, []);
