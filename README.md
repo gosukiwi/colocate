@@ -6,6 +6,8 @@ If only one part of your project uses a file, keep it with that code. If several
 
 You can run colocate from your terminal or add it to your project's automated checks.
 
+![Animated walkthrough of colocate. Move a private helper into its owner's folder, put a shared helper in the closest folder its owners share, and route an outside import through the module's entry file.](docs/colocate-demo.gif)
+
 ## Install
 
 ```bash
