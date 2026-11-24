@@ -114,8 +114,8 @@ describe("buildGraph resolution", () => {
     fs.writeFileSync(path.join(feature, "Feature.ts"), "export {};\n");
     const options = validateOptions({ root: "src", rules: ["entry"] });
     const first = openProject(options, root);
-    expect(first.findings(importer)).toEqual([]);
     fs.writeFileSync(path.join(feature, "helper.cts"), "export {};\n");
+    expect(first.findings(importer)).toEqual([]);
     const second = openProject(options, root);
     expect(second.findings(importer).map((finding) => finding.kind)).toEqual([
       "reachesPastEntry",
