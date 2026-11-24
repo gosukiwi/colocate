@@ -6,12 +6,12 @@ A command-line check that enforces dependency-based file organization. A file us
 
 The folders become a map of who uses what. Moving a file has a right answer. Reviewers and AI agents follow the same rule, so the layout stays consistent as the codebase grows. colocate is built as a guardrail: run it from a pre-push hook, an agent harness hook, or CI.
 
-colocate reads files on disk only. There is no editor or linter integration; see [ADR 0001](docs/adr/0001-standalone-cli-not-lint-plugin.md) for why.
+colocate is a standalone CLI that reads files on disk.
 
 ## Install
 
 ```bash
-npm i -D colocate
+npm i -D @gosukiwi/colocate
 ```
 
 Requires Node 20+.

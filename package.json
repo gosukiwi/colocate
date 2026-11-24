@@ -1,6 +1,6 @@
 {
-  "name": "colocate",
-  "version": "0.1.0",
+  "name": "@gosukiwi/colocate",
+  "version": "0.0.1",
   "license": "MIT",
   "author": "Federico Ramirez",
   "type": "module",
