@@ -1,6 +1,6 @@
 # colocate
 
-colocate suggests where to move TypeScript files based on who imports them. It also flags imports that bypass a module's entry file.
+colocate suggests where to move JavaScript and TypeScript files based on who imports them. It also flags imports that bypass a module's entry file.
 
 ![Animated walkthrough of moving private and shared helpers and importing through a module entry file](docs/colocate-demo.gif)
 
