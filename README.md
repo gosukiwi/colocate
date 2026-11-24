@@ -1,12 +1,10 @@
 # colocate
 
-Put files next to whoever uses them.
+colocate checks where files live in your project by looking at what imports them.
 
-A command-line check that enforces dependency-based file organization. A file used by one module belongs inside that module's folder. A file used by several belongs at their closest common ancestor — not buried in one of them, and not floating above them. Empty wrapper folders get flagged too.
+If only one part of your project uses a file, keep it with that code. If several parts use it, put it in the nearest folder that contains them all. colocate tells you where to move a file and points out unnecessary folders that hold just one source file.
 
-The folders become a map of who uses what. Moving a file has a right answer. Reviewers and AI agents follow the same rule, so the layout stays consistent as the codebase grows. colocate is built as a guardrail: run it from a pre-push hook, an agent harness hook, or CI.
-
-colocate is a standalone CLI that reads files on disk.
+You can run colocate from your terminal or add it to your project's automated checks.
 
 ## Install
 
@@ -25,11 +23,11 @@ npx colocate --format json
 npx colocate --config path/to/colocate.config.json
 ```
 
-A **Rule** is a check (`ownership` or `entry`); a **Finding** is one violation a Rule reports. colocate prints every Finding and exits non-zero if there are any.
+`ownership` and `entry` are the two rules you can run. Each problem a rule reports is called a Finding. colocate prints each Finding and exits with code `2` when there are any.
 
 ## Configuration
 
-colocate reads `colocate.config.json` from the working directory (or the file given with `--config`). Every key is optional and unknown keys are rejected.
+colocate looks for `colocate.config.json` in the directory where you run it. Use `--config` to choose another file. Every option is optional. colocate rejects unknown option names.
 
 ```json
 {
@@ -40,12 +38,12 @@ colocate reads `colocate.config.json` from the working directory (or the file gi
 }
 ```
 
-- `root`, `ignore`, `layers`: see [Options](#options).
-- `rules`: which Rules to run, any of `"ownership"` and `"entry"`. Default is both.
+- See [Options](#options) for `root`, `ignore`, and `layers`.
+- `rules` chooses which rules to run. The default runs both `ownership` and `entry`.
 
 ## Examples
 
-**Private — only `MyPage` imports `helper`**
+**Only `MyPage` uses `helper.ts`**
 
 ```
 # BAD
@@ -57,49 +55,49 @@ src/pages/MyPage/MyPage.ts
 src/pages/MyPage/helper.ts
 ```
 
-**Shared — `A` and `B` both import `fmt`**
+**Both `A` and `B` use `fmt.ts`**
 
 ```
-# BAD — buried in one owner
+# BAD: inside A's folder
 src/pages/A/A.ts
 src/pages/A/fmt.ts
 src/pages/B/B.ts
 
-# BAD — sitting above their common ancestor
+# BAD: a level above the folder they share
 src/fmt.ts
 src/pages/A/A.ts
 src/pages/B/B.ts
 
-# GOOD — at pages/, the common ancestor
+# GOOD: in pages/, the nearest folder that contains both
 src/pages/fmt.ts
 src/pages/A/A.ts
 src/pages/B/B.ts
 ```
 
-**Singleton folder — a wrapper around one file**
+**`Foo` has its own folder with just one file**
 
 ```
 # BAD
 src/Foo/Foo.ts
 
-# GOOD — flatten
+# GOOD: move Foo.ts up a level
 src/Foo.ts
 
-# GOOD — or colocate a stylesheet
+# GOOD: keep Foo.ts with its stylesheet
 src/Foo/Foo.ts
 src/Foo/Foo.module.css
 ```
 
-**App shell — `App` imports `Home`; it does not own it**
+**`App` imports `Home`, and `Home` stays in `pages`**
 
 ```
 # GOOD
-src/main.ts              ← entry (nothing imports it)
-src/App.ts               ← imported only by main
-src/pages/Home/Home.ts   ← stays a page, not pulled into App
+src/main.ts              (nothing imports this file)
+src/App.ts               (only main.ts imports this file)
+src/pages/Home/Home.ts   (App.ts imports this file)
 ```
 
-**Layers — `layers: ["src/ui"]` makes `Button` a public peer**
+**`layers: ["src/ui"]` lets `Button` stay in `src/ui`**
 
 ```
 # GOOD even if only Home imports Button
@@ -107,97 +105,93 @@ src/ui/Button/Button.ts
 src/pages/Home/Home.ts
 ```
 
-## The model
+## How `ownership` works
 
-colocate builds an import graph over `root` and checks that each file's location matches its consumers.
+colocate reads the imports under `root` to find out which parts of the project use each file.
 
-**Owners.** A directory is an owner when it has an entry file: one named after the directory (`pages/MyPage/MyPage.ts`), or an `index` that outside code imports through. A barrel that only groups loose helpers does not make its directory an owner. A file with no such folder around it owns only itself.
+**Owners.** A folder counts as an owner if it has a file named after it, such as `pages/MyPage/MyPage.ts`, or if outside code imports it through its `index` file. When an `index` only groups independent helpers, the helpers each count as their own owner. A file outside any owner folder also owns itself.
 
-**Private files.** Imported by exactly one owner → belong inside that owner's folder.
+**Private files.** If one owner imports a file, the file belongs in that owner's folder.
 
-**Shared files.** Imported by two or more owners → belong at their closest common ancestor, not above it and not inside one of them.
+**Shared files.** If two or more owners import a file, it belongs in the nearest folder that contains all of them.
 
-A folder's own entry file is never flagged for sitting in its own folder. If the folder itself is in the wrong place, the folders above it report that.
+A folder's entry file belongs in its own folder. If the folder needs to move, colocate reports that when it checks placement higher up.
 
-**The app shell.** Entry points (files nothing imports) and what they import directly do not own those imports. So `main.ts → App.ts → pages/Home/Home.ts` leaves `Home` where it is, with no configuration. Shells still vote on shared placement: if a shell importer belongs to a different owner than the file's other importers, the file counts as shared, never private.
+**The app shell.** Files that start the app often import pieces that belong elsewhere. When `main.ts` imports `App.ts` and `App.ts` imports `pages/Home/Home.ts`, colocate lets `Home` stay in `pages` without any configuration. The exception applies when the importer is a file that nothing imports, or when such a file imports it directly. If a different owner also imports the same file, colocate counts it as shared.
 
-For a longer bootstrap chain (`main → router → App → pages/...`), or a shell that imports loose top-level modules, declare those directories as `layers`.
+If your app starts through more files, such as `main`, `router`, and `App`, use `layers` for the folders that should keep their place. The same applies if the app shell uses standalone files at the top level.
 
 ## What it reports
 
-_This covers the `ownership` Rule's Findings. The `entry` Rule reports `reachesPastEntry` and `namedDoorReexport` — see [The entry rule](#the-entry-rule)._
+The table lists the Findings from `ownership`. See [The entry rule](#the-entry-rule) for `reachesPastEntry` and `namedDoorReexport`.
 
-| message               | meaning                                                                                                     | usual fix                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `privateOutsideOwner` | One owner imports this file, and it sits outside that owner's folder.                                       | Move it inside the folder, or convert the owner into a folder with a matching entry file. |
-| `sharedTooHigh`       | Several owners import it, and it sits above their common ancestor.                                          | Move it down to the common ancestor.                                                      |
-| `sharedInsideOwner`   | Several owners import it, and it sits inside one of theirs.                                                 | Hoist it to the common ancestor.                                                          |
-| `singletonFolder`     | A directory holds a single source file named after the directory (or `index`), and no stylesheet beside it. | Flatten the directory, or colocate something with the file.                               |
+| Finding               | What it means                                                                                       | Usual fix                                                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `privateOutsideOwner` | One owner imports the file, which lives outside that owner's folder.                                | Move it into the owner's folder. If the owner is a standalone file, put both files in a folder named after the owner. |
+| `sharedTooHigh`       | The file sits above the nearest folder that contains all its owners.                                | Move it down to that folder.                                                                                          |
+| `sharedInsideOwner`   | Several owners import the file, and it lives inside one owner's folder.                             | Move it to the nearest folder that contains all its owners.                                                           |
+| `singletonFolder`     | A folder has one source file named `index` or named after the folder, with no stylesheet beside it. | Move the file up a level or put related files beside it.                                                              |
 
-`singletonFolder` looks for a companion stylesheet only in the same directory (`.css`, `.scss`, `.sass`, `.less`, `.styl`).
+`singletonFolder` looks in the same folder for `.css`, `.scss`, `.sass`, `.less`, and `.styl` files.
 
-An `index` that re-exports two or more siblings is a namespace barrel and is left alone.
+An `index` that re-exports at least two files in the same folder is allowed.
 
 ## Options
 
-_`root` and `ignore` apply to both Rules; `layers` applies to `ownership` only._ Unknown option names are rejected.
+Both checks use `root` and `ignore`. Only `ownership` uses `layers`.
 
 ### `root`
 
-Directory to walk, and the ceiling for ownership. Default `"."`. Set `"src"` for a typical app.
+The folder to check. It also sets the outer limit for where `ownership` can place files. The default is `"."`, the current directory. Set it to `"src"` to check that folder.
 
-A relative `root` is resolved from the working directory, then searched upward so colocate still works from a subdirectory. The search stops at the nearest `package.json` or `.git`. Files outside `root` are never reported. A `root` argument on the command line overrides the configured one.
+For a relative `root`, colocate starts in the directory where you ran it and looks in parent directories if needed. The search stops at the nearest `package.json` or `.git`. Reports cover files under `root`. A `root` argument on the command line overrides the config file.
 
 ### `layers`
 
-Directories whose immediate children are public peers: they may have one consumer or many, and they stay where they are. With `layers: ["src/ui"]`, `src/ui/Button` is not expected to move into the page that uses it.
+Use `layers` for folders whose direct children should stay in place, even if only one part of the project uses them. With `layers: ["src/ui"]`, `src/ui/Button` stays in `src/ui` even if only one page uses it.
 
-Paths are matched relative to `root` and to the working directory, so with `root: "src"` both `["ui"]` and `["src/ui"]` work.
+colocate matches paths relative to `root` and to the directory where you ran it. With `root: "src"`, both `["ui"]` and `["src/ui"]` work.
 
-Only the layer's own files and each child folder's entry (`Button/Button.ts` or `Button/index.ts`) get this treatment. Files deeper in (`ui/Button/internals/state.ts`) are still checked.
+This applies to files directly in the layer and the entry file of each child folder, such as `Button/Button.ts` or `Button/index.ts`. colocate still checks the placement of files such as `ui/Button/internals/state.ts`.
 
-This is also how a deeper app shell is described:
+Use these layers if a longer app startup sequence should leave top-level modules and pages in place.
 
 ```json
 { "layers": ["src", "src/pages"] }
 ```
 
-That makes top-level modules and pages public peers.
-
 ### `ignore`
 
-Globs relative to `root`. Ignored files are not reported and do not count as consumers. A glob naming a directory excludes everything under it. Negation (`!`) is not supported — list what to exclude.
+List the paths or glob patterns to skip, relative to `root`. colocate skips those files and their imports. A pattern that matches a folder excludes everything inside it. List exclusions directly because colocate does not support `!` patterns.
 
 ## The entry rule
 
-The `ownership` Rule decides where a file belongs. The `entry` Rule decides how you get in.
-
-A directory containing an **entry file** — one named after the directory, or an `index` — is a module with a front door. Imports from outside must land on a door. Reaching past every door into the internals is an error.
+The `entry` check controls which files other parts of the project can import. A folder is a module if it has an entry file named after the folder or named `index`. Code outside the module must import from an entry file.
 
 ```
 src/pages/Inbox/Inbox.ts
 src/pages/Inbox/state.ts
 
-// BAD — reaches past the door into an internal file
+// BAD: imports state.ts directly
 import { loadThread } from "../pages/Inbox/state.ts";
 
-// GOOD — enters through the door
+// GOOD: imports through Inbox.ts
 import { loadThread } from "../pages/Inbox/Inbox.ts";
 ```
 
-**Nested doors count.** A nested module's own door is a legal landing place, so `pages/Inbox/FilterPanel/FilterPanel.ts` is reachable from anywhere. Only a file that is nobody's door is off limits.
+**Nested modules.** Outside code can also import a nested module's entry file, such as `pages/Inbox/FilterPanel/FilterPanel.ts`.
 
-**A directory with no entry file is not a module.** It gates nothing, and the rule demands nothing of it — a folder of independent siblings (`lib/`, `tabs/`) stays exactly as it is. The rule is a ratchet: add a door when a directory deserves one, and from then on it's the only way in.
+**Folders without an entry file.** Code can import individual files from folders such as `lib/` or `tabs/` when they have no entry file and sit outside any module. Adding an entry file makes the folder a module and restricts outside imports.
 
-**Unlike `ownership`, entry points get no exemption.** A file nothing imports still may not reach past a door; a shell burrowing into a feature's internals is exactly the finding worth having.
+**App startup files.** The same import restrictions apply to files nothing imports, such as `main.ts`.
 
-**Two kinds of door.** A file named after its folder (`Foo/Foo.ts`) is the shortcut door: the public module is that file, and it may export only what it declares. `index.ts` is the barrel door: the public surface may come from more than one file. The `entry` Rule reports `namedDoorReexport` when a named door identity-re-exports another source file in the graph — the usual fix is to add or use `index.ts`, or stop re-exporting. Re-exporting siblings from `index` is allowed; type-only re-exports are not this finding. Reaching past a door is still `reachesPastEntry` (unchanged).
+**Re-exports.** Use `index.ts` when a module needs to pass through exports from other files. If an entry file named after its folder, such as `Foo/Foo.ts`, passes through a value from another source file that colocate checks, colocate reports `namedDoorReexport`. Move the re-export to `index.ts` or remove it. Type-only re-exports are allowed. colocate reports an outside import directly into a module's internal file as `reachesPastEntry`.
 
-`entry` uses `root` and `ignore` with the same meaning as `ownership`. There is no `layers` option — layers are about placement, and say nothing about access. Do not ignore an entry file: that removes the door, and reaching into that folder stops being an error. colocate never edits files: rewriting a specifier would produce code that doesn't compile whenever the door doesn't already re-export the symbol, so widening the door is left to you.
+`entry` uses `root` and `ignore`. Keep entry files out of `ignore` so colocate can recognize the folders as modules. colocate reports the import for you to fix. When you switch an import to an entry file, make sure that file exports the name you need.
 
 ## Output format
 
-Text output goes to stderr, one Finding per line:
+In text mode, colocate writes one Finding per line to standard error (`stderr`).
 
 ```
 path:line:col  rule/kind  message
@@ -205,9 +199,9 @@ src/pages/helper.ts  ownership/privateOutsideOwner  File is imported by a single
 src/app.ts:3:21  entry/reachesPastEntry  'src/pages/Inbox/state.ts' is inside module 'src/pages/Inbox'; import it through 'src/pages/Inbox/Inbox.ts', or move it out of 'src/pages/Inbox' if it is not part of it.
 ```
 
-Paths are relative to the working directory. Findings about a file as a whole (the `ownership` Rule) have no `line:col`; Findings about an import (the `entry` Rule) do.
+Paths are relative to the directory where you ran colocate. Import Findings include a line and column. File placement Findings give just the path.
 
-With `--format json`, one JSON object goes to stdout:
+With `--format json`, colocate writes one JSON object to standard output (`stdout`).
 
 ```json
 {
@@ -226,37 +220,39 @@ With `--format json`, one JSON object goes to stdout:
 }
 ```
 
-For `ownership` Findings, `data.destination` is the directory to move into (relative to the working directory, with a trailing `/`). When a `privateOutsideOwner` Finding's owner is a standalone file, `data` also has `owner` and usually `moving`: `moving` is the file, or its folder when the file is that folder's entry, and both it and `owner` must move into `destination`, which may not exist yet. When `moving` already is, or sits inside, `destination`, it is omitted and only `owner` moves.
+For `ownership` Findings, `data.destination` gives the folder to move into. The path is relative to the directory where you ran colocate and ends in `/`.
 
-`line` and `column` are omitted for file-level Findings. `staleBaseline` appears only when the Baseline holds entries that no longer occur. If colocate itself fails (bad config, unreadable baseline), the JSON is `{ "error": "<message>" }`.
+If a `privateOutsideOwner` Finding names a standalone file as the owner, `data.owner` gives that file's path. `data.moving` gives the other file's path, or its folder's path if the file is the folder's entry. Move both paths into `data.destination`, creating the folder if needed. If the other path is already at or inside its destination, `data.moving` is absent and only `data.owner` needs to move.
+
+Only import Findings have `line` and `column`. `staleBaseline` counts Baseline entries that no longer match a Finding and appears only when the count is above zero. If colocate can't run, for example because the config is invalid or the Baseline is unreadable, it outputs `{ "error": "<message>" }`.
 
 ## Exit codes
 
-| code | meaning                       |
-| ---- | ----------------------------- |
-| 0    | clean                         |
-| 2    | Findings, or any error at all |
+| Code | Meaning                                               |
+| ---- | ----------------------------------------------------- |
+| `0`  | The checks passed.                                    |
+| `2`  | colocate found a problem or could not run the checks. |
 
-Findings and errors share exit code 2 on purpose. Claude Code hooks only show a command's stderr to the agent when it exits with 2; any other non-zero code is treated as a non-blocking error and the agent never sees the message.
+colocate uses exit code `2` for both Findings and errors so Claude Code hooks show the message to the agent. Claude Code treats other nonzero exit codes as nonblocking.
 
 ## Baseline
 
-A Baseline (`colocate.baseline.json`) records Findings you have accepted so a legacy codebase can adopt colocate without fixing everything first. Baselined Findings are not reported; new ones are.
+A Baseline is a list of Findings you've accepted. Keep it in `colocate.baseline.json` to start using colocate on an existing project and see new Findings as they come up.
 
-- `colocate --baseline-add-all` records every current Finding. It is for humans adopting colocate; agents must not use it.
-- `colocate --update-baseline` only shrinks an existing Baseline: it drops entries whose Findings no longer occur and never adds new ones. If no Baseline file exists yet, it is created from the current Findings.
-- Entries that no longer occur are reported as stale (`staleBaseline` in JSON) until you run `--update-baseline`.
+- `colocate --baseline-add-all` records every current Finding. Run it yourself when adopting colocate. Agents must not use it.
+- `colocate --update-baseline` removes entries for Findings that no longer occur. It adds entries only if the Baseline file is missing, in which case it creates the file from the current Findings.
+- Until you run `--update-baseline`, colocate reports those old entries as stale. In JSON output, the count is `staleBaseline`.
 
 ## Hooks and CI
 
-**Git pre-push hook** (`.git/hooks/pre-push`, made executable):
+**Git pre-push hook.** Save this as `.git/hooks/pre-push` and make it executable.
 
 ```sh
 #!/bin/sh
 npx colocate
 ```
 
-**Claude Code `Stop` hook** (`.claude/settings.json`), so the agent sees Findings and fixes them before it finishes:
+**Claude Code `Stop` hook.** Add this to `.claude/settings.json` to show Findings to the agent before it finishes.
 
 ```json
 {
@@ -266,7 +262,7 @@ npx colocate
 }
 ```
 
-**GitHub Actions step:**
+**GitHub Actions.** Run colocate after installing the project's dependencies.
 
 ```yaml
 - run: npx colocate
@@ -274,7 +270,7 @@ npx colocate
 
 ## Notes
 
-- Resolution uses the TypeScript compiler, so `paths` and `baseUrl` from the nearest `tsconfig.json` are honoured. Extensionless imports and `./x.js` → `x.ts` work the way bundlers do.
-- Tests, `node_modules`, `dist`, coverage, VCS dirs, and `.d.ts` files are skipped.
-- Code reachable only through an import cycle is not checked. Breaking the cycle restores the reports.
-- On a case-insensitive filesystem, config paths (`root: "SRC"` vs `src`) still have to match disk casing.
+- colocate uses TypeScript to find imported files. It follows `paths` and `baseUrl` from the nearest `tsconfig.json`, supports imports without extensions, and can resolve `./x.js` to `x.ts`.
+- colocate skips tests, `node_modules`, `dist`, coverage output, version control folders, and `.d.ts` files.
+- colocate skips code it can reach only through a chain of imports that loops back on itself. Break the loop to check that code.
+- Use the capitalization from disk in config paths, even on a case-insensitive filesystem. For example, use `root: "src"` for a folder named `src`.
