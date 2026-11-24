@@ -1,16 +1,15 @@
 import path from "node:path";
 import ts from "typescript";
-import { isEntryFile } from "./gates.js";
-import { safeReadFile } from "../lib/fs-safe.js";
 import {
   canonicalGraphPath,
   getGraphResolutionSettings,
   graphHasFile,
   type Graph,
 } from "../lib/graph.js";
-import { parseSourceFile, stringLiteralText } from "../lib/parse.js";
+import { stringLiteralText } from "../lib/parse.js";
+import { parsedSourceFile } from "../lib/parsed-files.js";
 import { scopeBindsRequire } from "../lib/require-binding.js";
-import { stem } from "../lib/paths.js";
+import { isEntryFile, stem } from "../lib/paths.js";
 import { resolveSpecifier } from "../lib/resolve.js";
 
 export function isNamedDoor(filePath: string): boolean {
@@ -432,16 +431,14 @@ function checkExports(node: ts.Node, scan: DoorScan): void {
 export function namedDoorReexports(
   filePath: string,
   graph: Graph,
-  content?: string,
 ): readonly { target: string; pos: number; end: number }[] {
   if (!isNamedDoor(filePath)) {
     return [];
   }
-  const source = typeof content === "string" ? content : safeReadFile(filePath);
-  if (source === undefined) {
+  const sourceFile = parsedSourceFile(graph, filePath);
+  if (sourceFile === undefined) {
     return [];
   }
-  const sourceFile = parseSourceFile(filePath, source);
   const settings = getGraphResolutionSettings(graph);
   const fromDir = path.dirname(filePath);
   const results: { target: string; pos: number; end: number }[] = [];

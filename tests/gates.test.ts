@@ -1,11 +1,8 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Graph } from "../src/lib/graph.js";
-import {
-  findCrossedGate,
-  getGates,
-  isEntryFile,
-} from "../src/project/gates.js";
+import { isEntryFile } from "../src/lib/paths.js";
+import { findCrossedGate, getGates } from "../src/project/gates.js";
 
 const root = path.join(path.sep, "p", "src");
 const at = (...parts: string[]): string => path.join(root, ...parts);

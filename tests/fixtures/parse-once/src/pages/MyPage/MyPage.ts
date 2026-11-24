@@ -1,0 +1,1 @@
+export const MyPage = 1;

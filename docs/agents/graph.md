@@ -30,7 +30,9 @@ The graph's own **edge index** uses the same fold: `buildGraphFromFiles` recover
 
 ## No cache
 
-The graph is built once per `openProject` call and never revalidated: a run is a snapshot of the disk. There is no visit token, no staleness window and no per-process cache. Anything that looks like one belongs to the old ESLint plugin and must not come back.
+The graph is built once per `openProject` call and never revalidated: a run is a snapshot of the disk. There is no visit token, no staleness window and no cross-run or per-process cache. Anything that looks like one belongs to the old ESLint plugin and must not come back.
+
+The one thing the graph carries is a per-run parse memo (`src/lib/parsed-files.ts`, keyed by path, attached to the `Graph` with `derivedFromGraph`). The build parses and reads each file once. It stores the imports with positions for every file and also the `SourceFile` for entry files (`isEntryFile`, which includes named doors). Lookups are plain reads and never touch the disk, so the memo is a snapshot: a file that was unreadable at build time, or that appears or changes afterwards, is answered from the build or not at all. A file deleted after the build yields no Findings, because `subjectFor` resolves its real path first. Do not add another parse or read of a graph file elsewhere: ask the memo.
 
 ## Robustness
 

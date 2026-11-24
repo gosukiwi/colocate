@@ -2,12 +2,17 @@ import path from "node:path";
 import ts from "typescript";
 import { derivedFromGraph } from "./derived.js";
 import { safeReadFile, safeRealpath } from "./fs-safe.js";
-import { extractSpecifiers } from "./parse.js";
+import {
+  parsedFilesOf,
+  parseForStore,
+  type ParsedFile,
+} from "./parsed-files.js";
 import {
   createResolutionSettings,
   resolveSpecifier,
   type ResolutionSettings,
 } from "./resolve.js";
+import { isEntryFile } from "./paths.js";
 import { collectSourceFiles } from "./walk.js";
 
 export interface Graph {
@@ -105,6 +110,7 @@ export function buildGraphFromFiles(
   );
   const importers = new Map<string, string[]>();
   const settings = createResolutionSettings(resolvedRoot);
+  const store = new Map<string, ParsedFile>();
 
   for (const file of files) {
     const realFile = safeRealpath(file);
@@ -116,8 +122,10 @@ export function buildGraphFromFiles(
       continue;
     }
     const fromDir = path.dirname(file);
+    const parsed = parseForStore(file, content, isEntryFile(file));
+    store.set(file, parsed);
 
-    for (const specifier of extractSpecifiers(content, file)) {
+    for (const { specifier } of parsed.imports) {
       const resolved = resolveSpecifier(specifier, fromDir, settings);
       if (resolved === undefined) {
         continue;
@@ -141,6 +149,7 @@ export function buildGraphFromFiles(
   graphFileSet.prime(graph, fileSet);
   graphFilesByFoldedPath.prime(graph, filesByFoldedPath);
   graphFilesByDir.prime(graph, filesByParentDir(files));
+  parsedFilesOf.prime(graph, store);
   return graph;
 }
 

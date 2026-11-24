@@ -1,12 +1,7 @@
 import path from "node:path";
 import { derivedFromGraph } from "../lib/derived.js";
 import type { Graph } from "../lib/graph.js";
-import { isInsideDir, stem } from "../lib/paths.js";
-
-export function isEntryFile(filePath: string): boolean {
-  const base = stem(filePath);
-  return base === "index" || base === path.basename(path.dirname(filePath));
-}
+import { isEntryFile, isInsideDir, stem } from "../lib/paths.js";
 
 export const getGates = derivedFromGraph<ReadonlyMap<string, string>>(
   (graph) => {
